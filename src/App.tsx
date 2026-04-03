@@ -1,63 +1,45 @@
 import './App.css';
 
-import React, { useState } from 'react';
+import { useRef, useState } from 'react';
 
-import logo from './394-2026-Logo.png';
+import { ActivityFeed } from './components/ActivityFeed';
+import { BudgetLineSummary } from './components/BudgetLineSummary';
+import { FilterBar } from './components/FilterBar';
+import { Header } from './components/Header';
+import { SummaryProgressBars } from './components/SummaryProgressBars';
+import { TransactionList } from './components/TransactionList';
+import { TransactionModal } from './components/TransactionModal';
+import { LedgerProvider } from './context/LedgerContext';
 
-function App() {
-  const [count, setCount] = useState(0);
+const Dashboard = () => {
+  const [modalOpen, setModalOpen] = useState(false);
+  const tableRef = useRef<HTMLDivElement>(null);
+
+  const scrollToTable = () => {
+    tableRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p className="header">
-          {' '}
-          🚀 Vite + React + Typescript + Vitest 🤘 & <br />
-          Eslint 🔥+ Prettier for Wildcats
-        </p>
-
-        <div className="body">
-          {' '}
-          <button onClick={() => setCount((count) => count + 1)}>
-            count is: {count}
-          </button>
-          <p> Don&apos;t forgot to install Eslint and Prettier in Your Vscode.</p>
-          <p>
-            Mess up the code in <code>App.tsx </code> and save the file.
-          </p>
-          <p>
-            <a
-              className="App-link"
-              href="https://reactjs.org"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learn React
-            </a>
-            {' | '}
-            <a
-              className="App-link"
-              href="https://vitejs.dev/guide/features.html"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Vite Docs
-            </a>
-            {' | '}
-            <a
-              className="App-link"
-              href="https://vitest.dev/guide/features.html"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Vitest Docs
-            </a>
-          </p>
+    <div className="wl-app">
+      <Header onAddTransaction={() => setModalOpen(true)} />
+      <main className="wl-main">
+        <SummaryProgressBars />
+        <BudgetLineSummary />
+        <ActivityFeed onViewAll={scrollToTable} />
+        <div ref={tableRef}>
+          <FilterBar />
         </div>
-      </header>
+        <TransactionList />
+      </main>
+      <TransactionModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
     </div>
   );
-}
+};
+
+const App = () => (
+  <LedgerProvider>
+    <Dashboard />
+  </LedgerProvider>
+);
 
 export default App;
