@@ -48,8 +48,19 @@ export interface OverallSummaryData {
 
 export type BudgetAllocations = Record<BudgetLine, number>;
 
-export interface LedgerContextValue {
+export interface Organization {
+  id: string;
+  name: string;
+  budgetAllocations: BudgetAllocations;
   transactions: Transaction[];
+}
+
+export interface LedgerContextValue {
+  organizations: Organization[];
+  addOrganization: (name: string, budgetAllocations: BudgetAllocations) => void;
+  activeOrganizationId: string | null;
+  setActiveOrganizationId: (id: string) => void;
+  activeOrganization: Organization | null;
   addTransaction: (transaction: Omit<Transaction, 'id'>) => void;
   selectedBudgetLine: BudgetLine | null;
   setSelectedBudgetLine: (line: BudgetLine | null) => void;
@@ -58,8 +69,4 @@ export interface LedgerContextValue {
   filteredTransactions: Transaction[];
   budgetLineSummaries: BudgetLineSummaryData[];
   overallSummary: OverallSummaryData;
-  budgetAllocations: BudgetAllocations;
-  setBudgetAllocation: (line: BudgetLine, amount: number) => void;
-  organizationName: string;
-  setOrganizationName: (name: string) => void;
 }

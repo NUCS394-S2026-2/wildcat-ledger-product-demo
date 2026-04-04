@@ -1,18 +1,39 @@
 import { doc, setDoc } from 'firebase/firestore';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { db } from '../config/firebase';
 import { useLedger } from '../hooks/useLedger';
+import { BudgetAllocations } from '../types';
 import { BUDGET_LINES, formatCurrency } from '../utilities/calculations';
 
-export const SetBudgetPage = () => {
-  const {
-    budgetAllocations,
-    setBudgetAllocation,
-    organizationName,
-    setOrganizationName,
-  } = useLedger();
+const EMPTY_ALLOCATIONS: BudgetAllocations = {
+  ASG: 0,
+  Operating: 0,
+  Gifts: 0,
+  'Debit Card': 0,
+};
+
+export const CreateOrganization = () => {
+  const { addOrganization } = useLedger();
   const navigate = useNavigate();
+
+  const [orgName, setOrgName] = useState('');
+  const [allocations, setAllocations] = useState<BudgetAllocations>(EMPTY_ALLOCATIONS);
+
+  const setAllocation = (line: keyof BudgetAllocations, val: number) => {
+    setAllocations((prev) => ({ ...prev, [line]: val }));
+  };
+
+  const handleSubmit = async () => {
+    const name = orgName.trim() || 'My Organization';
+    await setDoc(doc(db, 'clubs', name), {
+      name,
+      ...allocations,
+    });
+    addOrganization(name, allocations);
+    navigate('/');
+  };
 
   return (
     <div className="wl-register-root">
@@ -31,9 +52,9 @@ export const SetBudgetPage = () => {
                 id="org-name"
                 type="text"
                 className="wl-form-input wl-budget-allocation-input"
-                value={organizationName}
+                value={orgName}
                 placeholder="Enter organization name"
-                onChange={(e) => setOrganizationName(e.target.value)}
+                onChange={(e) => setOrgName(e.target.value)}
               />
             </div>
             <span className="wl-budget-allocation-preview" />
@@ -51,16 +72,16 @@ export const SetBudgetPage = () => {
                   min="0"
                   step="0.01"
                   className="wl-form-input wl-budget-allocation-input"
-                  value={budgetAllocations[line] === 0 ? '' : budgetAllocations[line]}
+                  value={allocations[line] === 0 ? '' : allocations[line]}
                   placeholder="0.00"
                   onChange={(e) => {
                     const val = parseFloat(e.target.value);
-                    setBudgetAllocation(line, isNaN(val) ? 0 : Math.max(0, val));
+                    setAllocation(line, isNaN(val) ? 0 : Math.max(0, val));
                   }}
                 />
               </div>
               <span className="wl-budget-allocation-preview">
-                {formatCurrency(budgetAllocations[line])}
+                {formatCurrency(allocations[line])}
               </span>
             </div>
           ))}
@@ -68,15 +89,9 @@ export const SetBudgetPage = () => {
         <button
           type="button"
           className="wl-btn-primary wl-register-done"
-          onClick={async () => {
-            await setDoc(doc(db, 'clubs', organizationName), {
-              name: organizationName,
-              ...budgetAllocations,
-            });
-            navigate('/dashboard');
-          }}
+          onClick={handleSubmit}
         >
-          Go to Dashboard →
+          Create Organization
         </button>
       </div>
     </div>
