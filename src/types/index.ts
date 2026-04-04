@@ -46,6 +46,8 @@ export interface OverallSummaryData {
   flaggedCount: number;
 }
 
+export type BudgetAllocations = Record<BudgetLine, number>;
+
 export interface LedgerContextValue {
   transactions: Transaction[];
   addTransaction: (transaction: Omit<Transaction, 'id'>) => void;
@@ -56,4 +58,6 @@ export interface LedgerContextValue {
   filteredTransactions: Transaction[];
   budgetLineSummaries: BudgetLineSummaryData[];
   overallSummary: OverallSummaryData;
+  budgetAllocations: BudgetAllocations;
+  setBudgetAllocation: (line: BudgetLine, amount: number) => void;
 }

@@ -1,6 +1,12 @@
 import React, { createContext, useMemo, useState } from 'react';
 
-import { BudgetLine, FilterType, LedgerContextValue, Transaction } from '../types';
+import {
+  BudgetAllocations,
+  BudgetLine,
+  FilterType,
+  LedgerContextValue,
+  Transaction,
+} from '../types';
 import {
   applyFilters,
   calculateBudgetLineSummaries,
@@ -14,6 +20,16 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
   const [transactions, setTransactions] = useState<Transaction[]>(mockTransactions);
   const [selectedBudgetLine, setSelectedBudgetLine] = useState<BudgetLine | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterType>('All');
+  const [budgetAllocations, setBudgetAllocations] = useState<BudgetAllocations>({
+    ASG: 0,
+    Operating: 0,
+    Gifts: 0,
+    'Debit Card': 0,
+  });
+
+  const setBudgetAllocation = (line: BudgetLine, amount: number) => {
+    setBudgetAllocations((prev) => ({ ...prev, [line]: amount }));
+  };
 
   const addTransaction = (transaction: Omit<Transaction, 'id'>) => {
     const newTransaction: Transaction = {
@@ -29,13 +45,13 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
   );
 
   const budgetLineSummaries = useMemo(
-    () => calculateBudgetLineSummaries(transactions),
-    [transactions],
+    () => calculateBudgetLineSummaries(transactions, budgetAllocations),
+    [transactions, budgetAllocations],
   );
 
   const overallSummary = useMemo(
-    () => calculateOverallSummary(transactions),
-    [transactions],
+    () => calculateOverallSummary(transactions, budgetAllocations),
+    [transactions, budgetAllocations],
   );
 
   const value: LedgerContextValue = {
@@ -48,6 +64,8 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     filteredTransactions,
     budgetLineSummaries,
     overallSummary,
+    budgetAllocations,
+    setBudgetAllocation,
   };
 
   return <LedgerContext.Provider value={value}>{children}</LedgerContext.Provider>;

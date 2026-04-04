@@ -1,4 +1,5 @@
 import {
+  BudgetAllocations,
   BudgetLine,
   BudgetLineSummaryData,
   FilterType,
@@ -25,6 +26,7 @@ export const getMissingRequirements = (t: Transaction): string[] => {
 
 export const calculateBudgetLineSummaries = (
   transactions: Transaction[],
+  allocations: BudgetAllocations,
 ): BudgetLineSummaryData[] =>
   BUDGET_LINES.map((line) => {
     const lineTransactions = transactions.filter((t) => t.budgetLine === line);
@@ -34,11 +36,12 @@ export const calculateBudgetLineSummaries = (
     const outflow = lineTransactions
       .filter((t) => t.direction === 'Outflow')
       .reduce((sum, t) => sum + t.amount, 0);
-    return { line, balance: inflow - outflow, inflow, outflow };
+    return { line, balance: allocations[line] - outflow, inflow, outflow };
   });
 
 export const calculateOverallSummary = (
   transactions: Transaction[],
+  allocations: BudgetAllocations,
 ): OverallSummaryData => {
   const totalInflow = transactions
     .filter((t) => t.direction === 'Inflow')
@@ -46,9 +49,10 @@ export const calculateOverallSummary = (
   const totalOutflow = transactions
     .filter((t) => t.direction === 'Outflow')
     .reduce((sum, t) => sum + t.amount, 0);
+  const totalAllocated = Object.values(allocations).reduce((sum, v) => sum + v, 0);
   const flaggedCount = transactions.filter(isTransactionFlagged).length;
   return {
-    totalBalance: totalInflow - totalOutflow,
+    totalBalance: totalAllocated - totalOutflow,
     totalInflow,
     totalOutflow,
     flaggedCount,
