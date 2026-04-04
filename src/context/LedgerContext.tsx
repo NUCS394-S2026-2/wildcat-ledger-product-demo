@@ -5,6 +5,7 @@ import {
   BudgetLine,
   FilterType,
   LedgerContextValue,
+  Organization,
   Transaction,
 } from '../types';
 import {
@@ -15,30 +16,46 @@ import {
 
 export const LedgerContext = createContext<LedgerContextValue | undefined>(undefined);
 
+const EMPTY_ALLOCATIONS: BudgetAllocations = {
+  ASG: 0,
+  Operating: 0,
+  Gifts: 0,
+  'Debit Card': 0,
+};
+
 export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [activeOrganizationId, setActiveOrganizationId] = useState<string | null>(null);
   const [selectedBudgetLine, setSelectedBudgetLine] = useState<BudgetLine | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterType>('All');
-  const [organizationName, setOrganizationName] = useState<string>('');
 
-  const [budgetAllocations, setBudgetAllocations] = useState<BudgetAllocations>({
-    ASG: 0,
-    Operating: 0,
-    Gifts: 0,
-    'Debit Card': 0,
-  });
+  const activeOrganization =
+    organizations.find((o) => o.id === activeOrganizationId) ?? null;
 
-  const setBudgetAllocation = (line: BudgetLine, amount: number) => {
-    setBudgetAllocations((prev) => ({ ...prev, [line]: amount }));
+  const addOrganization = (name: string, budgetAllocations: BudgetAllocations) => {
+    const newOrg: Organization = {
+      id: `org-${Date.now()}`,
+      name,
+      budgetAllocations,
+      transactions: [],
+    };
+    setOrganizations((prev) => [...prev, newOrg]);
   };
 
   const addTransaction = (transaction: Omit<Transaction, 'id'>) => {
-    const newTransaction: Transaction = {
-      ...transaction,
-      id: `txn-${Date.now()}`,
-    };
-    setTransactions((prev) => [newTransaction, ...prev]);
+    if (!activeOrganizationId) return;
+    const newTransaction: Transaction = { ...transaction, id: `txn-${Date.now()}` };
+    setOrganizations((prev) =>
+      prev.map((o) =>
+        o.id === activeOrganizationId
+          ? { ...o, transactions: [newTransaction, ...o.transactions] }
+          : o,
+      ),
+    );
   };
+
+  const transactions = activeOrganization?.transactions ?? [];
+  const budgetAllocations = activeOrganization?.budgetAllocations ?? EMPTY_ALLOCATIONS;
 
   const filteredTransactions = useMemo(
     () => applyFilters(transactions, selectedBudgetLine, activeFilter),
@@ -56,7 +73,11 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
   );
 
   const value: LedgerContextValue = {
-    transactions,
+    organizations,
+    addOrganization,
+    activeOrganizationId,
+    setActiveOrganizationId,
+    activeOrganization,
     addTransaction,
     selectedBudgetLine,
     setSelectedBudgetLine,
@@ -65,10 +86,6 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     filteredTransactions,
     budgetLineSummaries,
     overallSummary,
-    budgetAllocations,
-    setBudgetAllocation,
-    organizationName,
-    setOrganizationName,
   };
 
   return <LedgerContext.Provider value={value}>{children}</LedgerContext.Provider>;

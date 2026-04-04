@@ -4,13 +4,15 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 import { LedgerProvider } from './context/LedgerContext';
 import { Dashboard } from './pages/Dashboard';
+import { NewOrganization } from './pages/NewOrganization';
 import { SetBudgetPage } from './pages/SetBudgetPage';
 
 const App = () => (
   <BrowserRouter>
     <LedgerProvider>
       <Routes>
-        <Route path="/" element={<SetBudgetPage />} />
+        <Route path="/" element={<NewOrganization />} />
+        <Route path="/setup" element={<SetBudgetPage />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
