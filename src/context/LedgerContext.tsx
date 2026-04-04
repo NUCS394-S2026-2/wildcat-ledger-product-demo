@@ -12,12 +12,11 @@ import {
   calculateBudgetLineSummaries,
   calculateOverallSummary,
 } from '../utilities/calculations';
-import { mockTransactions } from '../utilities/mockData';
 
 export const LedgerContext = createContext<LedgerContextValue | undefined>(undefined);
 
 export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
-  const [transactions, setTransactions] = useState<Transaction[]>(mockTransactions);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [selectedBudgetLine, setSelectedBudgetLine] = useState<BudgetLine | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterType>('All');
   const [budgetAllocations, setBudgetAllocations] = useState<BudgetAllocations>({
