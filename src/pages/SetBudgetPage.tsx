@@ -1,5 +1,7 @@
+import { doc, setDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 
+import { db } from '../config/firebase';
 import { useLedger } from '../hooks/useLedger';
 import { BUDGET_LINES, formatCurrency } from '../utilities/calculations';
 
@@ -66,7 +68,13 @@ export const SetBudgetPage = () => {
         <button
           type="button"
           className="wl-btn-primary wl-register-done"
-          onClick={() => navigate('/dashboard')}
+          onClick={async () => {
+            await setDoc(doc(db, 'clubs', organizationName), {
+              name: organizationName,
+              ...budgetAllocations,
+            });
+            navigate('/dashboard');
+          }}
         >
           Go to Dashboard →
         </button>
