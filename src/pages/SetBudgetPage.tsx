@@ -22,15 +22,15 @@ export const SetBudgetPage = () => {
         <div className="wl-budget-allocation-form">
           <div className="wl-budget-allocation-row">
             <label className="wl-budget-allocation-label" htmlFor="org-name">
-              Organization Name
+              Org Name
             </label>
             <div className="wl-budget-allocation-input-wrap">
               <input
                 id="org-name"
                 type="text"
-                className="wl-form-input wl-budget-allocation-input"
+                className="wl-form-input wl-budget-allocation-input wl-budget-allocation-input--text"
                 value={organizationName}
-                placeholder="Enter organization name"
+                placeholder="Enter org name"
                 onChange={(e) => setOrganizationName(e.target.value)}
               />
             </div>
