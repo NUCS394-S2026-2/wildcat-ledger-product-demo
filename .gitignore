@@ -7,3 +7,6 @@ node_modules/*
 coverage
 CLAUDE.md
 .env
+.env
+.env.local
+.env.*.local

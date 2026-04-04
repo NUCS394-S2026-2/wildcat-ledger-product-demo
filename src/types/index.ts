@@ -60,4 +60,6 @@ export interface LedgerContextValue {
   overallSummary: OverallSummaryData;
   budgetAllocations: BudgetAllocations;
   setBudgetAllocation: (line: BudgetLine, amount: number) => void;
+  organizationName: string;
+  setOrganizationName: (name: string) => void;
 }
