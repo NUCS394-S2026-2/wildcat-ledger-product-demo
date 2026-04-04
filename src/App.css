@@ -664,6 +664,26 @@
   font-size: 0.95rem;
 }
 
+/* ─── Back Button ────────────────────────────────────────────────── */
+.wl-btn-back {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.15s;
+}
+
+.wl-btn-back:hover {
+  color: var(--color-primary);
+}
+
 /* ─── Set Budget Form ────────────────────────────────────────────── */
 .wl-budget-allocation-form {
   display: flex;
@@ -718,6 +738,79 @@
   font-weight: 600;
   color: var(--color-primary);
   text-align: right;
+}
+
+/* ─── Organization Select Page ──────────────────────────────────── */
+.wl-org-select-wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 640px;
+}
+
+.wl-org-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 8px;
+}
+
+.wl-org-card {
+  width: 160px;
+  height: 160px;
+  background: var(--color-card);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 16px;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s,
+    background 0.15s;
+}
+
+.wl-org-card:hover {
+  border-color: var(--color-primary);
+  background: #f8f4ff;
+  box-shadow: 0 0 0 3px rgba(78, 42, 132, 0.12);
+}
+
+.wl-org-card-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  text-align: center;
+  word-break: break-word;
+}
+
+.wl-org-card--create {
+  border-style: dashed;
+  color: var(--color-text-muted);
+}
+
+.wl-org-card--create .wl-org-card-name {
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.wl-org-card--create:hover .wl-org-card-name {
+  color: var(--color-primary);
+}
+
+.wl-org-card-create-icon {
+  font-size: 1.8rem;
+  font-weight: 300;
+  color: var(--color-text-muted);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.wl-org-card--create:hover .wl-org-card-create-icon {
+  color: var(--color-primary);
 }
 
 /* ─── Filter Bar ─────────────────────────────────────────────────── */
