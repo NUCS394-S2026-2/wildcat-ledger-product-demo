@@ -19,6 +19,8 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [selectedBudgetLine, setSelectedBudgetLine] = useState<BudgetLine | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterType>('All');
+  const [organizationName, setOrganizationName] = useState<string>('');
+
   const [budgetAllocations, setBudgetAllocations] = useState<BudgetAllocations>({
     ASG: 0,
     Operating: 0,
@@ -65,6 +67,8 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     overallSummary,
     budgetAllocations,
     setBudgetAllocation,
+    organizationName,
+    setOrganizationName,
   };
 
   return <LedgerContext.Provider value={value}>{children}</LedgerContext.Provider>;

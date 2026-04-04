@@ -4,7 +4,12 @@ import { useLedger } from '../hooks/useLedger';
 import { BUDGET_LINES, formatCurrency } from '../utilities/calculations';
 
 export const SetBudgetPage = () => {
-  const { budgetAllocations, setBudgetAllocation } = useLedger();
+  const {
+    budgetAllocations,
+    setBudgetAllocation,
+    organizationName,
+    setOrganizationName,
+  } = useLedger();
   const navigate = useNavigate();
 
   return (
@@ -15,6 +20,22 @@ export const SetBudgetPage = () => {
           Set up your organization&apos;s budget allocations to get started.
         </p>
         <div className="wl-budget-allocation-form">
+          <div className="wl-budget-allocation-row">
+            <label className="wl-budget-allocation-label" htmlFor="org-name">
+              Organization Name
+            </label>
+            <div className="wl-budget-allocation-input-wrap">
+              <input
+                id="org-name"
+                type="text"
+                className="wl-form-input wl-budget-allocation-input"
+                value={organizationName}
+                placeholder="Enter organization name"
+                onChange={(e) => setOrganizationName(e.target.value)}
+              />
+            </div>
+            <span className="wl-budget-allocation-preview" />
+          </div>
           {BUDGET_LINES.map((line) => (
             <div key={line} className="wl-budget-allocation-row">
               <label className="wl-budget-allocation-label" htmlFor={`budget-${line}`}>
