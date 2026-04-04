@@ -664,6 +664,26 @@
   font-size: 0.95rem;
 }
 
+/* ─── Back Button ────────────────────────────────────────────────── */
+.wl-btn-back {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.15s;
+}
+
+.wl-btn-back:hover {
+  color: var(--color-primary);
+}
+
 /* ─── Set Budget Form ────────────────────────────────────────────── */
 .wl-budget-allocation-form {
   display: flex;
