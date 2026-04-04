@@ -12,7 +12,7 @@ const EMPTY_ALLOCATIONS: BudgetAllocations = {
   'Debit Card': 0,
 };
 
-export const SetBudgetPage = () => {
+export const CreateOrganization = () => {
   const { addOrganization } = useLedger();
   const navigate = useNavigate();
 

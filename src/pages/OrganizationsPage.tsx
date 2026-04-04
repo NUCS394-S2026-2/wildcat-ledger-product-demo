@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useLedger } from '../hooks/useLedger';
 
-export const NewOrganization = () => {
+export const OrganizationsPage = () => {
   const { organizations, setActiveOrganizationId } = useLedger();
   const navigate = useNavigate();
 
