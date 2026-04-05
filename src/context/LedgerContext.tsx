@@ -1,12 +1,14 @@
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   getDocs,
   onSnapshot,
   orderBy,
   query,
   setDoc,
+  updateDoc,
 } from 'firebase/firestore';
 import React, { createContext, useEffect, useMemo, useState } from 'react';
 
@@ -101,7 +103,18 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     if (!activeOrganizationId) return;
     const txnsRef = collection(db, 'clubs', activeOrganizationId, 'transactions');
     await addDoc(txnsRef, transaction);
-    // onSnapshot above will update local state automatically
+  };
+
+  const updateTransaction = async (id: string, transaction: Omit<Transaction, 'id'>) => {
+    if (!activeOrganizationId) return;
+    const txnRef = doc(db, 'clubs', activeOrganizationId, 'transactions', id);
+    await updateDoc(txnRef, { ...transaction });
+  };
+
+  const deleteTransaction = async (id: string) => {
+    if (!activeOrganizationId) return;
+    const txnRef = doc(db, 'clubs', activeOrganizationId, 'transactions', id);
+    await deleteDoc(txnRef);
   };
 
   const activeOrganization =
@@ -132,6 +145,8 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     setActiveOrganizationId,
     activeOrganization,
     addTransaction,
+    updateTransaction,
+    deleteTransaction,
     selectedBudgetLine,
     setSelectedBudgetLine,
     activeFilter,

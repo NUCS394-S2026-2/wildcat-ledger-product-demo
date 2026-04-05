@@ -12,6 +12,7 @@ import {
 
 interface AddTransactionFormProps {
   onSuccess?: () => void;
+  existingTransaction?: Transaction;
 }
 
 interface FormState {
@@ -46,9 +47,17 @@ const initialForm: FormState = {
   notes: '',
 };
 
-export const AddTransactionForm = ({ onSuccess }: AddTransactionFormProps) => {
-  const { addTransaction, budgetLineSummaries } = useLedger();
-  const [form, setForm] = useState<FormState>(initialForm);
+export const AddTransactionForm = ({
+  onSuccess,
+  existingTransaction,
+}: AddTransactionFormProps) => {
+  const { addTransaction, updateTransaction, budgetLineSummaries } = useLedger();
+  const isEditing = !!existingTransaction;
+  const [form, setForm] = useState<FormState>(
+    existingTransaction
+      ? { ...existingTransaction, amount: String(existingTransaction.amount) }
+      : initialForm,
+  );
   const [error, setError] = useState<string | null>(null);
   const [overdraftWarning, setOverdraftWarning] = useState<string | null>(null);
   const [pendingTransaction, setPendingTransaction] = useState<Omit<
@@ -70,7 +79,11 @@ export const AddTransactionForm = ({ onSuccess }: AddTransactionFormProps) => {
   };
 
   const submitTransaction = async (transaction: Omit<Transaction, 'id'>) => {
-    await addTransaction(transaction);
+    if (isEditing && existingTransaction) {
+      await updateTransaction(existingTransaction.id, transaction);
+    } else {
+      await addTransaction(transaction);
+    }
     setForm(initialForm);
     setPendingTransaction(null);
     setOverdraftWarning(null);
@@ -328,7 +341,7 @@ export const AddTransactionForm = ({ onSuccess }: AddTransactionFormProps) => {
 
       {!overdraftWarning && (
         <button type="submit" className="wl-btn-primary">
-          Add Transaction
+          {isEditing ? 'Save Changes' : 'Add Transaction'}
         </button>
       )}
     </form>

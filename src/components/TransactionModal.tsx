@@ -1,13 +1,19 @@
 import { useEffect } from 'react';
 
+import { Transaction } from '../types';
 import { AddTransactionForm } from './AddTransactionForm';
 
 interface TransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
+  existingTransaction?: Transaction;
 }
 
-export const TransactionModal = ({ isOpen, onClose }: TransactionModalProps) => {
+export const TransactionModal = ({
+  isOpen,
+  onClose,
+  existingTransaction,
+}: TransactionModalProps) => {
   useEffect(() => {
     if (!isOpen) return;
     const handleKey = (e: KeyboardEvent) => {
@@ -30,7 +36,7 @@ export const TransactionModal = ({ isOpen, onClose }: TransactionModalProps) => 
       >
         <div className="wl-modal-header">
           <h2 id="modal-title" className="wl-modal-title">
-            Add Transaction
+            {existingTransaction ? 'Edit Transaction' : 'Add Transaction'}
           </h2>
           <button
             type="button"
@@ -42,7 +48,10 @@ export const TransactionModal = ({ isOpen, onClose }: TransactionModalProps) => 
           </button>
         </div>
         <div className="wl-modal-body">
-          <AddTransactionForm onSuccess={onClose} />
+          <AddTransactionForm
+            onSuccess={onClose}
+            existingTransaction={existingTransaction}
+          />
         </div>
       </div>
     </div>
