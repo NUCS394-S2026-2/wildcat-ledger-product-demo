@@ -1,10 +1,12 @@
 import {
   addDoc,
   collection,
+  doc,
   getDocs,
   onSnapshot,
   orderBy,
   query,
+  setDoc,
 } from 'firebase/firestore';
 import React, { createContext, useEffect, useMemo, useState } from 'react';
 
@@ -38,16 +40,16 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
   const [selectedBudgetLine, setSelectedBudgetLine] = useState<BudgetLine | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterType>('All');
 
-  // Load all organizations from Firestore on mount
+  // Load all clubs from Firestore on mount
   useEffect(() => {
-    const orgsRef = collection(db, 'organizations');
+    const orgsRef = collection(db, 'clubs');
     const unsub = onSnapshot(orgsRef, async (snapshot) => {
       const orgs: Organization[] = await Promise.all(
         snapshot.docs.map(async (doc) => {
           const data = doc.data();
           const txnsSnap = await getDocs(
             query(
-              collection(db, 'organizations', doc.id, 'transactions'),
+              collection(db, 'clubs', doc.id, 'transactions'),
               orderBy('date', 'desc'),
             ),
           );
@@ -72,7 +74,7 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (!activeOrganizationId) return;
     const txnsRef = query(
-      collection(db, 'organizations', activeOrganizationId, 'transactions'),
+      collection(db, 'clubs', activeOrganizationId, 'transactions'),
       orderBy('date', 'desc'),
     );
     const unsub = onSnapshot(txnsRef, (snapshot) => {
@@ -88,7 +90,7 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
   }, [activeOrganizationId]);
 
   const addOrganization = async (name: string, budgetAllocations: BudgetAllocations) => {
-    await addDoc(collection(db, 'organizations'), {
+    await setDoc(doc(db, 'clubs', name), {
       name,
       budgetAllocations,
     });
@@ -97,13 +99,13 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
 
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     if (!activeOrganizationId) return;
-    const txnsRef = collection(db, 'organizations', activeOrganizationId, 'transactions');
+    const txnsRef = collection(db, 'clubs', activeOrganizationId, 'transactions');
     await addDoc(txnsRef, transaction);
     // onSnapshot above will update local state automatically
   };
 
   const activeOrganization =
-    organizations.find((o) => o.id === activeOrganizationId) ?? null;
+    organizations.find((o: Organization) => o.id === activeOrganizationId) ?? null;
 
   const transactions = activeOrganization?.transactions ?? [];
   const budgetAllocations = activeOrganization?.budgetAllocations ?? EMPTY_ALLOCATIONS;
