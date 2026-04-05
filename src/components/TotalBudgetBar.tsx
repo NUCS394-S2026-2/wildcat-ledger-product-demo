@@ -10,10 +10,13 @@ export const TotalBudgetBar = () => {
     (sum, v) => sum + v,
     0,
   );
+
+  // Inflows add to the available budget, outflows reduce it
+  const totalAvailable = totalAllocated + overallSummary.totalInflow;
   const totalSpent = overallSummary.totalOutflow;
-  const remaining = totalAllocated - totalSpent;
+  const remaining = overallSummary.totalBalance; // allocated + inflow - outflow
   const spentPct =
-    totalAllocated > 0 ? Math.min((totalSpent / totalAllocated) * 100, 100) : 0;
+    totalAvailable > 0 ? Math.min((totalSpent / totalAvailable) * 100, 100) : 0;
 
   return (
     <div className="wl-total-budget-bar wl-card">
@@ -26,8 +29,12 @@ export const TotalBudgetBar = () => {
         </span>
       </div>
       <div className="wl-total-budget-meta">
-        Total: {formatCurrency(totalAllocated)} &nbsp;·&nbsp; Spent:{' '}
-        {formatCurrency(totalSpent)}
+        Allocated: {formatCurrency(totalAllocated)}&nbsp;·&nbsp;
+        <span className="wl-amount-positive">
+          +{formatCurrency(overallSummary.totalInflow)} inflow
+        </span>
+        &nbsp;·&nbsp;
+        <span className="wl-amount-negative">−{formatCurrency(totalSpent)} spent</span>
       </div>
       <div className="wl-progress-track wl-total-budget-track">
         <div
