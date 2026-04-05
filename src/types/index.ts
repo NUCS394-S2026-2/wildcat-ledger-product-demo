@@ -57,11 +57,11 @@ export interface Organization {
 
 export interface LedgerContextValue {
   organizations: Organization[];
-  addOrganization: (name: string, budgetAllocations: BudgetAllocations) => void;
+  addOrganization: (name: string, budgetAllocations: BudgetAllocations) => Promise<void>;
   activeOrganizationId: string | null;
   setActiveOrganizationId: (id: string) => void;
   activeOrganization: Organization | null;
-  addTransaction: (transaction: Omit<Transaction, 'id'>) => void;
+  addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
   selectedBudgetLine: BudgetLine | null;
   setSelectedBudgetLine: (line: BudgetLine | null) => void;
   activeFilter: FilterType;

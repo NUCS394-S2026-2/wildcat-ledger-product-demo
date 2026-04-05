@@ -1,5 +1,14 @@
-import React, { createContext, useMemo, useState } from 'react';
+import {
+  addDoc,
+  collection,
+  getDocs,
+  onSnapshot,
+  orderBy,
+  query,
+} from 'firebase/firestore';
+import React, { createContext, useEffect, useMemo, useState } from 'react';
 
+import { db } from '../config/firebase';
 import {
   BudgetAllocations,
   BudgetLine,
@@ -29,30 +38,72 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
   const [selectedBudgetLine, setSelectedBudgetLine] = useState<BudgetLine | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterType>('All');
 
-  const activeOrganization =
-    organizations.find((o) => o.id === activeOrganizationId) ?? null;
+  // Load all organizations from Firestore on mount
+  useEffect(() => {
+    const orgsRef = collection(db, 'organizations');
+    const unsub = onSnapshot(orgsRef, async (snapshot) => {
+      const orgs: Organization[] = await Promise.all(
+        snapshot.docs.map(async (doc) => {
+          const data = doc.data();
+          const txnsSnap = await getDocs(
+            query(
+              collection(db, 'organizations', doc.id, 'transactions'),
+              orderBy('date', 'desc'),
+            ),
+          );
+          const transactions: Transaction[] = txnsSnap.docs.map((t) => ({
+            id: t.id,
+            ...(t.data() as Omit<Transaction, 'id'>),
+          }));
+          return {
+            id: doc.id,
+            name: data.name as string,
+            budgetAllocations: data.budgetAllocations as BudgetAllocations,
+            transactions,
+          };
+        }),
+      );
+      setOrganizations(orgs);
+    });
+    return () => unsub();
+  }, []);
 
-  const addOrganization = (name: string, budgetAllocations: BudgetAllocations) => {
-    const newOrg: Organization = {
-      id: `org-${Date.now()}`,
+  // When active org changes, subscribe to its transactions in real-time
+  useEffect(() => {
+    if (!activeOrganizationId) return;
+    const txnsRef = query(
+      collection(db, 'organizations', activeOrganizationId, 'transactions'),
+      orderBy('date', 'desc'),
+    );
+    const unsub = onSnapshot(txnsRef, (snapshot) => {
+      const transactions: Transaction[] = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as Omit<Transaction, 'id'>),
+      }));
+      setOrganizations((prev) =>
+        prev.map((o) => (o.id === activeOrganizationId ? { ...o, transactions } : o)),
+      );
+    });
+    return () => unsub();
+  }, [activeOrganizationId]);
+
+  const addOrganization = async (name: string, budgetAllocations: BudgetAllocations) => {
+    await addDoc(collection(db, 'organizations'), {
       name,
       budgetAllocations,
-      transactions: [],
-    };
-    setOrganizations((prev) => [...prev, newOrg]);
+    });
+    // onSnapshot above will update local state automatically
   };
 
-  const addTransaction = (transaction: Omit<Transaction, 'id'>) => {
+  const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     if (!activeOrganizationId) return;
-    const newTransaction: Transaction = { ...transaction, id: `txn-${Date.now()}` };
-    setOrganizations((prev) =>
-      prev.map((o) =>
-        o.id === activeOrganizationId
-          ? { ...o, transactions: [newTransaction, ...o.transactions] }
-          : o,
-      ),
-    );
+    const txnsRef = collection(db, 'organizations', activeOrganizationId, 'transactions');
+    await addDoc(txnsRef, transaction);
+    // onSnapshot above will update local state automatically
   };
+
+  const activeOrganization =
+    organizations.find((o) => o.id === activeOrganizationId) ?? null;
 
   const transactions = activeOrganization?.transactions ?? [];
   const budgetAllocations = activeOrganization?.budgetAllocations ?? EMPTY_ALLOCATIONS;

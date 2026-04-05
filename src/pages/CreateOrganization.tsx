@@ -23,8 +23,8 @@ export const CreateOrganization = () => {
     setAllocations((prev) => ({ ...prev, [line]: val }));
   };
 
-  const handleSubmit = () => {
-    addOrganization(orgName.trim() || 'My Organization', allocations);
+  const handleSubmit = async () => {
+    await addOrganization(orgName.trim() || 'My Organization', allocations);
     navigate('/');
   };
 
