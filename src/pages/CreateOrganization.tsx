@@ -20,9 +20,13 @@ export const CreateOrganization = () => {
 
   const [orgName, setOrgName] = useState('');
   const [allocations, setAllocations] = useState<BudgetAllocations>(EMPTY_ALLOCATIONS);
+  const [rawInputs, setRawInputs] = useState<Record<string, string>>({});
 
-  const setAllocation = (line: keyof BudgetAllocations, val: number) => {
-    setAllocations((prev) => ({ ...prev, [line]: val }));
+  const setAllocation = (line: keyof BudgetAllocations, raw: string) => {
+    if (!/^\d*\.?\d{0,2}$/.test(raw)) return;
+    setRawInputs((prev) => ({ ...prev, [line]: raw }));
+    const val = parseFloat(raw);
+    setAllocations((prev) => ({ ...prev, [line]: isNaN(val) ? 0 : val }));
   };
 
   const handleSubmit = async () => {
@@ -72,16 +76,12 @@ export const CreateOrganization = () => {
                 <span className="wl-budget-allocation-prefix">$</span>
                 <input
                   id={`budget-${line}`}
-                  type="number"
-                  min="0"
-                  step="0.01"
+                  type="text"
+                  inputMode="decimal"
                   className="wl-form-input wl-budget-allocation-input"
-                  value={allocations[line] === 0 ? '' : allocations[line]}
+                  value={rawInputs[line] ?? ''}
                   placeholder="0.00"
-                  onChange={(e) => {
-                    const val = parseFloat(e.target.value);
-                    setAllocation(line, isNaN(val) ? 0 : Math.max(0, val));
-                  }}
+                  onChange={(e) => setAllocation(line, e.target.value)}
                 />
               </div>
               <span className="wl-budget-allocation-preview">
