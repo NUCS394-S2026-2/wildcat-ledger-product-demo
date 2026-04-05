@@ -1,8 +1,6 @@
-import { doc, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { db } from '../config/firebase';
 import { useLedger } from '../hooks/useLedger';
 import { BudgetAllocations } from '../types';
 import { BUDGET_LINES, formatCurrency } from '../utilities/calculations';
@@ -29,18 +27,16 @@ export const CreateOrganization = () => {
     setAllocations((prev) => ({ ...prev, [line]: isNaN(val) ? 0 : val }));
   };
 
+  const [error, setError] = useState<string | null>(null);
+
   const handleSubmit = async () => {
     const name = orgName.trim() || 'My Organization';
     try {
-      await setDoc(doc(db, 'clubs', name), {
-        name,
-        ...allocations,
-      });
+      await addOrganization(name, allocations);
+      navigate('/');
     } catch (err) {
-      console.error('Failed to save organization to database:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create organization.');
     }
-    addOrganization(name, allocations);
-    navigate('/');
   };
 
   return (
@@ -90,6 +86,11 @@ export const CreateOrganization = () => {
             </div>
           ))}
         </div>
+        {error && (
+          <div className="wl-form-error" style={{ marginTop: 12 }}>
+            {error}
+          </div>
+        )}
         <button
           type="button"
           className="wl-btn-primary wl-register-done"
