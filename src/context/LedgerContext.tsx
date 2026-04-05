@@ -39,7 +39,14 @@ const EMPTY_ALLOCATIONS: BudgetAllocations = {
 
 export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
-  const [activeOrganizationId, setActiveOrganizationId] = useState<string | null>(null);
+  const [activeOrganizationId, setActiveOrganizationIdState] = useState<string | null>(
+    () => localStorage.getItem('activeOrganizationId'),
+  );
+
+  const setActiveOrganizationId = (id: string) => {
+    localStorage.setItem('activeOrganizationId', id);
+    setActiveOrganizationIdState(id);
+  };
   const [selectedBudgetLine, setSelectedBudgetLine] = useState<BudgetLine | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterType>('All');
 
