@@ -27,10 +27,16 @@ export const CreateOrganization = () => {
     setAllocations((prev) => ({ ...prev, [line]: isNaN(val) ? 0 : val }));
   };
 
+  const [error, setError] = useState<string | null>(null);
+
   const handleSubmit = async () => {
     const name = orgName.trim() || 'My Organization';
-    await addOrganization(name, allocations);
-    navigate('/');
+    try {
+      await addOrganization(name, allocations);
+      navigate('/');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create organization.');
+    }
   };
 
   return (
@@ -80,6 +86,11 @@ export const CreateOrganization = () => {
             </div>
           ))}
         </div>
+        {error && (
+          <div className="wl-form-error" style={{ marginTop: 12 }}>
+            {error}
+          </div>
+        )}
         <button
           type="button"
           className="wl-btn-primary wl-register-done"

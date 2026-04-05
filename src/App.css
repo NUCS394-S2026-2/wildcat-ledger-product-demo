@@ -798,6 +798,146 @@
   text-align: right;
 }
 
+/* ─── Total Budget Bar (Dashboard) ──────────────────────────────── */
+.wl-total-budget-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wl-total-budget-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.wl-total-budget-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.wl-total-budget-remaining {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.wl-total-budget-meta {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.wl-total-budget-track {
+  height: 10px;
+  margin-top: 2px;
+}
+
+.wl-total-budget-fill {
+  background: var(--color-positive);
+}
+
+/* ─── Org Card Budget Bar ────────────────────────────────────────── */
+.wl-org-card-wrap {
+  width: 280px;
+  background: var(--color-card);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.wl-org-card-wrap:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(78, 42, 132, 0.12);
+}
+
+.wl-org-card-main {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 28px 20px 16px;
+  text-align: center;
+  width: 100%;
+}
+
+.wl-org-budget-bar {
+  padding: 0 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wl-org-budget-summary {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  text-align: left;
+  line-height: 1.4;
+}
+
+.wl-org-budget-fill {
+  background: var(--color-positive);
+}
+
+.wl-org-budget-toggle {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+  transition: opacity 0.12s;
+}
+
+.wl-org-budget-toggle:hover {
+  opacity: 0.7;
+}
+
+.wl-org-budget-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border);
+}
+
+.wl-org-budget-line-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.wl-org-budget-line-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.wl-org-budget-line-name {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.wl-org-budget-line-remaining {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-positive);
+}
+
+.wl-progress-track--sm {
+  height: 5px;
+}
+
 /* ─── Organization Select Page ──────────────────────────────────── */
 .wl-org-select-wrapper {
   display: flex;
