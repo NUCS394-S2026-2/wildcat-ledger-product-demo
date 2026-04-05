@@ -64,6 +64,7 @@ export interface LedgerContextValue {
   addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
   updateTransaction: (id: string, transaction: Omit<Transaction, 'id'>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
+  updateBudgetAllocations: (allocations: BudgetAllocations) => Promise<void>;
   selectedBudgetLine: BudgetLine | null;
   setSelectedBudgetLine: (line: BudgetLine | null) => void;
   activeFilter: FilterType;

@@ -4,6 +4,7 @@ import {
   deleteDoc,
   doc,
   getDocs,
+  increment,
   onSnapshot,
   orderBy,
   query,
@@ -99,22 +100,70 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     // onSnapshot above will update local state automatically
   };
 
+  const applyDelta = (
+    orgId: string,
+    line: BudgetLine,
+    direction: string,
+    amount: number,
+  ) => {
+    const delta = direction === 'Inflow' ? amount : -amount;
+    return updateDoc(doc(db, 'clubs', orgId), {
+      [`budgetAllocations.${line}`]: increment(delta),
+    });
+  };
+
+  const reverseDelta = (
+    orgId: string,
+    line: BudgetLine,
+    direction: string,
+    amount: number,
+  ) => {
+    const delta = direction === 'Inflow' ? -amount : amount;
+    return updateDoc(doc(db, 'clubs', orgId), {
+      [`budgetAllocations.${line}`]: increment(delta),
+    });
+  };
+
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     if (!activeOrganizationId) return;
     const txnsRef = collection(db, 'clubs', activeOrganizationId, 'transactions');
     await addDoc(txnsRef, transaction);
+    await applyDelta(
+      activeOrganizationId,
+      transaction.budgetLine,
+      transaction.direction,
+      transaction.amount,
+    );
   };
 
   const updateTransaction = async (id: string, transaction: Omit<Transaction, 'id'>) => {
     if (!activeOrganizationId) return;
+    const old = activeOrganization?.transactions.find((t) => t.id === id);
     const txnRef = doc(db, 'clubs', activeOrganizationId, 'transactions', id);
     await updateDoc(txnRef, { ...transaction });
+    if (old)
+      await reverseDelta(activeOrganizationId, old.budgetLine, old.direction, old.amount);
+    await applyDelta(
+      activeOrganizationId,
+      transaction.budgetLine,
+      transaction.direction,
+      transaction.amount,
+    );
   };
 
   const deleteTransaction = async (id: string) => {
     if (!activeOrganizationId) return;
+    const old = activeOrganization?.transactions.find((t) => t.id === id);
     const txnRef = doc(db, 'clubs', activeOrganizationId, 'transactions', id);
     await deleteDoc(txnRef);
+    if (old)
+      await reverseDelta(activeOrganizationId, old.budgetLine, old.direction, old.amount);
+  };
+
+  const updateBudgetAllocations = async (allocations: BudgetAllocations) => {
+    if (!activeOrganizationId) return;
+    const orgRef = doc(db, 'clubs', activeOrganizationId);
+    await updateDoc(orgRef, { budgetAllocations: allocations });
   };
 
   const activeOrganization =
@@ -147,6 +196,7 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     addTransaction,
     updateTransaction,
     deleteTransaction,
+    updateBudgetAllocations,
     selectedBudgetLine,
     setSelectedBudgetLine,
     activeFilter,

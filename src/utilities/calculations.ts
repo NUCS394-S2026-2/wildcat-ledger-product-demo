@@ -36,7 +36,7 @@ export const calculateBudgetLineSummaries = (
     const outflow = lineTransactions
       .filter((t) => t.direction === 'Outflow')
       .reduce((sum, t) => sum + t.amount, 0);
-    return { line, balance: allocations[line] + inflow - outflow, inflow, outflow };
+    return { line, balance: allocations[line], inflow, outflow };
   });
 
 export const calculateOverallSummary = (
@@ -49,10 +49,10 @@ export const calculateOverallSummary = (
   const totalOutflow = transactions
     .filter((t) => t.direction === 'Outflow')
     .reduce((sum, t) => sum + t.amount, 0);
-  const totalAllocated = Object.values(allocations).reduce((sum, v) => sum + v, 0);
+  const totalBalance = Object.values(allocations).reduce((sum, v) => sum + v, 0);
   const flaggedCount = transactions.filter(isTransactionFlagged).length;
   return {
-    totalBalance: totalAllocated + totalInflow - totalOutflow,
+    totalBalance,
     totalInflow,
     totalOutflow,
     flaggedCount,

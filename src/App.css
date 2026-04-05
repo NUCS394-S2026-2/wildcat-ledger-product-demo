@@ -218,6 +218,42 @@
   margin: 0;
 }
 
+.wl-allocation-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--color-card);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  box-shadow: var(--shadow);
+}
+
+.wl-allocation-edit-row {
+  display: grid;
+  grid-template-columns: 120px 1fr 100px;
+  align-items: center;
+  gap: 14px;
+}
+
+.wl-allocation-edit-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.wl-allocation-edit-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.wl-total-remaining {
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-left: auto;
+}
+
 .wl-clear-filter {
   background: none;
   border: none;
