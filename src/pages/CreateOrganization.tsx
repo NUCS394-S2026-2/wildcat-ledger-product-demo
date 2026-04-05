@@ -45,7 +45,7 @@ export const CreateOrganization = () => {
               <input
                 id="org-name"
                 type="text"
-                className="wl-form-input wl-budget-allocation-input"
+                className="wl-form-input"
                 value={orgName}
                 placeholder="Enter organization name"
                 onChange={(e) => setOrgName(e.target.value)}
