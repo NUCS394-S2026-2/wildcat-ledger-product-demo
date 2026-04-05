@@ -117,6 +117,12 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     await deleteDoc(txnRef);
   };
 
+  const updateBudgetAllocations = async (allocations: BudgetAllocations) => {
+    if (!activeOrganizationId) return;
+    const orgRef = doc(db, 'clubs', activeOrganizationId);
+    await updateDoc(orgRef, { budgetAllocations: allocations });
+  };
+
   const activeOrganization =
     organizations.find((o: Organization) => o.id === activeOrganizationId) ?? null;
 
@@ -147,6 +153,7 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     addTransaction,
     updateTransaction,
     deleteTransaction,
+    updateBudgetAllocations,
     selectedBudgetLine,
     setSelectedBudgetLine,
     activeFilter,
