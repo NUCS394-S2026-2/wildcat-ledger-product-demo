@@ -27,10 +27,14 @@ export const CreateOrganization = () => {
 
   const handleSubmit = async () => {
     const name = orgName.trim() || 'My Organization';
-    await setDoc(doc(db, 'clubs', name), {
-      name,
-      ...allocations,
-    });
+    try {
+      await setDoc(doc(db, 'clubs', name), {
+        name,
+        ...allocations,
+      });
+    } catch (err) {
+      console.error('Failed to save organization to database:', err);
+    }
     addOrganization(name, allocations);
     navigate('/');
   };
