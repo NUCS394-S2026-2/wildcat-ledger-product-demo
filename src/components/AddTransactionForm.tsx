@@ -173,44 +173,24 @@ export const AddTransactionForm = ({ onSuccess }: AddTransactionFormProps) => {
         </div>
       </div>
 
-      <div className="wl-form-row">
-        <div className="wl-form-group">
-          <label className="wl-form-label" htmlFor="type">
-            Transaction Type
-          </label>
-          <select
-            id="type"
-            name="type"
-            className="wl-form-select"
-            value={form.type}
-            onChange={handleChange}
-          >
-            <option value="Reimbursement">Reimbursement</option>
-            <option value="Fundraiser deposit">Fundraiser deposit</option>
-            <option value="Debit card purchase">Debit card purchase</option>
-            <option value="Transfer">Transfer</option>
-            <option value="Direct payment">Direct payment</option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
-        <div className="wl-form-group">
-          <label className="wl-form-label" htmlFor="fundingSource">
-            Funding Source
-          </label>
-          <select
-            id="fundingSource"
-            name="fundingSource"
-            className="wl-form-select"
-            value={form.fundingSource}
-            onChange={handleChange}
-          >
-            <option value="SOFO">SOFO</option>
-            <option value="ASG">ASG</option>
-            <option value="Gift">Gift</option>
-            <option value="Fundraiser">Fundraiser</option>
-            <option value="Transfer">Transfer</option>
-          </select>
-        </div>
+      <div className="wl-form-group">
+        <label className="wl-form-label" htmlFor="type">
+          Transaction Type
+        </label>
+        <select
+          id="type"
+          name="type"
+          className="wl-form-select"
+          value={form.type}
+          onChange={handleChange}
+        >
+          <option value="Reimbursement">Reimbursement</option>
+          <option value="Fundraiser deposit">Fundraiser deposit</option>
+          <option value="Debit card purchase">Debit card purchase</option>
+          <option value="Transfer">Transfer</option>
+          <option value="Direct payment">Direct payment</option>
+          <option value="Other">Other</option>
+        </select>
       </div>
 
       <div className="wl-form-row">
