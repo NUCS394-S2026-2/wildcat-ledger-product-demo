@@ -64,7 +64,7 @@ export const AddTransactionForm = ({ onSuccess }: AddTransactionFormProps) => {
     setError(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const amount = parseFloat(form.amount);
     if (!form.title.trim()) {
@@ -95,7 +95,7 @@ export const AddTransactionForm = ({ onSuccess }: AddTransactionFormProps) => {
       notes: form.notes.trim(),
     };
 
-    addTransaction(newTransaction);
+    await addTransaction(newTransaction);
     setForm(initialForm);
     onSuccess?.();
   };
