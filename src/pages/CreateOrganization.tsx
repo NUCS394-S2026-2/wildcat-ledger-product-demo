@@ -1,8 +1,6 @@
-import { doc, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { db } from '../config/firebase';
 import { useLedger } from '../hooks/useLedger';
 import { BudgetAllocations } from '../types';
 import { BUDGET_LINES, formatCurrency } from '../utilities/calculations';
@@ -31,15 +29,7 @@ export const CreateOrganization = () => {
 
   const handleSubmit = async () => {
     const name = orgName.trim() || 'My Organization';
-    try {
-      await setDoc(doc(db, 'clubs', name), {
-        name,
-        ...allocations,
-      });
-    } catch (err) {
-      console.error('Failed to save organization to database:', err);
-    }
-    addOrganization(name, allocations);
+    await addOrganization(name, allocations);
     navigate('/');
   };
 
@@ -59,7 +49,7 @@ export const CreateOrganization = () => {
               <input
                 id="org-name"
                 type="text"
-                className="wl-form-input wl-budget-allocation-input"
+                className="wl-form-input"
                 value={orgName}
                 placeholder="Enter organization name"
                 onChange={(e) => setOrgName(e.target.value)}
