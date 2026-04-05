@@ -14,10 +14,15 @@ export const OrganizationsPage = () => {
   return (
     <div className="wl-register-root">
       <div className="wl-org-select-wrapper">
-        <h1 className="wl-register-title">WildcatLedger</h1>
-        <p className="wl-register-subtitle">
-          Select an organization or create a new one.
-        </p>
+        <div className="wl-onboarding-header">
+          <h1 className="wl-register-title">WildcatLedger</h1>
+          <p className="wl-onboarding-tagline">
+            Track and manage your club&apos;s finances
+          </p>
+          <p className="wl-register-subtitle">
+            Create or select an organization to get started
+          </p>
+        </div>
         <div className="wl-org-grid">
           {organizations.map((org) => (
             <button
@@ -36,6 +41,7 @@ export const OrganizationsPage = () => {
           >
             <span className="wl-org-card-create-icon">+</span>
             <span className="wl-org-card-name">Create Organization</span>
+            <span className="wl-org-card-hint">Start tracking your budget</span>
           </button>
         </div>
       </div>
