@@ -6,8 +6,11 @@ import { Organization } from '../types';
 import { formatCurrency } from '../utilities/calculations';
 
 function getOrgBudgetStats(org: Organization) {
-  const totalBudget = Object.values(org.budgetAllocations).reduce((sum, v) => sum + v, 0);
-  const totalSpent = org.transactions
+  const totalBudget = Object.values(org.budgetAllocations ?? {}).reduce(
+    (sum, v) => sum + v,
+    0,
+  );
+  const totalSpent = (org.transactions ?? [])
     .filter((t) => t.direction === 'Outflow')
     .reduce((sum, t) => sum + t.amount, 0);
   const remaining = totalBudget - totalSpent;
