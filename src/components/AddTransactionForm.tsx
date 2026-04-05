@@ -47,9 +47,14 @@ const initialForm: FormState = {
 };
 
 export const AddTransactionForm = ({ onSuccess }: AddTransactionFormProps) => {
-  const { addTransaction } = useLedger();
+  const { addTransaction, budgetLineSummaries } = useLedger();
   const [form, setForm] = useState<FormState>(initialForm);
   const [error, setError] = useState<string | null>(null);
+  const [overdraftWarning, setOverdraftWarning] = useState<string | null>(null);
+  const [pendingTransaction, setPendingTransaction] = useState<Omit<
+    Transaction,
+    'id'
+  > | null>(null);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
@@ -62,6 +67,14 @@ export const AddTransactionForm = ({ onSuccess }: AddTransactionFormProps) => {
       setForm((prev) => ({ ...prev, [name]: target.value }));
     }
     setError(null);
+  };
+
+  const submitTransaction = async (transaction: Omit<Transaction, 'id'>) => {
+    await addTransaction(transaction);
+    setForm(initialForm);
+    setPendingTransaction(null);
+    setOverdraftWarning(null);
+    onSuccess?.();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -95,9 +108,18 @@ export const AddTransactionForm = ({ onSuccess }: AddTransactionFormProps) => {
       notes: form.notes.trim(),
     };
 
-    await addTransaction(newTransaction);
-    setForm(initialForm);
-    onSuccess?.();
+    if (form.direction === 'Outflow') {
+      const lineSummary = budgetLineSummaries.find((s) => s.line === form.budgetLine);
+      if (lineSummary && amount > lineSummary.balance) {
+        setPendingTransaction(newTransaction);
+        setOverdraftWarning(
+          `This outflow of $${amount.toFixed(2)} exceeds the current ${form.budgetLine} balance of $${lineSummary.balance.toFixed(2)}. The account will go negative. Do you want to proceed anyway?`,
+        );
+        return;
+      }
+    }
+
+    await submitTransaction(newTransaction);
   };
 
   return (
@@ -299,9 +321,36 @@ export const AddTransactionForm = ({ onSuccess }: AddTransactionFormProps) => {
         </div>
       )}
 
-      <button type="submit" className="wl-btn-primary">
-        Add Transaction
-      </button>
+      {overdraftWarning && pendingTransaction && (
+        <div className="wl-overdraft-warning" role="alert">
+          <p>{overdraftWarning}</p>
+          <div className="wl-overdraft-actions">
+            <button
+              type="button"
+              className="wl-btn-warning"
+              onClick={() => submitTransaction(pendingTransaction)}
+            >
+              Proceed anyway
+            </button>
+            <button
+              type="button"
+              className="wl-btn-cancel"
+              onClick={() => {
+                setOverdraftWarning(null);
+                setPendingTransaction(null);
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {!overdraftWarning && (
+        <button type="submit" className="wl-btn-primary">
+          Add Transaction
+        </button>
+      )}
     </form>
   );
 };
