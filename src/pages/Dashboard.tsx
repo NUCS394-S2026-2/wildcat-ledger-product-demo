@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { BudgetLineSummary } from '../components/BudgetLineSummary';
 import { FilterBar } from '../components/FilterBar';
 import { Header } from '../components/Header';
-import { TotalBudgetBar } from '../components/TotalBudgetBar';
 import { TransactionList } from '../components/TransactionList';
 import { TransactionModal } from '../components/TransactionModal';
 
@@ -21,7 +20,6 @@ export const Dashboard = () => {
         </button>
       </div>
       <main className="wl-main">
-        <TotalBudgetBar />
         <BudgetLineSummary />
         <FilterBar />
         <TransactionList />
