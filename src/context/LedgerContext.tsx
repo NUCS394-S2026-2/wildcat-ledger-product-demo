@@ -100,6 +100,12 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
   }, [activeOrganizationId]);
 
   const addOrganization = async (name: string, budgetAllocations: BudgetAllocations) => {
+    const duplicate = organizations.some(
+      (o) => o.name.trim().toLowerCase() === name.trim().toLowerCase(),
+    );
+    if (duplicate) {
+      throw new Error(`An organization named "${name}" already exists.`);
+    }
     await setDoc(doc(db, 'clubs', name), {
       name,
       budgetAllocations,
