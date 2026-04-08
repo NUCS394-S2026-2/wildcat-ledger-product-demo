@@ -30,7 +30,19 @@ export const CreateOrganization = () => {
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
-    const name = orgName.trim() || 'My Organization';
+    const name = orgName.trim();
+    if (!name) {
+      setError('Organization name is required.');
+      return;
+    }
+    const missingLines = BUDGET_LINES.filter(
+      (line) => rawInputs[line] === undefined || rawInputs[line] === '',
+    );
+    if (missingLines.length > 0) {
+      setError(`Please enter a value for: ${missingLines.join(', ')}.`);
+      return;
+    }
+    setError(null);
     try {
       await addOrganization(name, allocations);
       navigate('/');
