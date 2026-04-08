@@ -13,7 +13,7 @@ const EMPTY_ALLOCATIONS: BudgetAllocations = {
 };
 
 export const CreateOrganization = () => {
-  const { addOrganization } = useLedger();
+  const { addOrganization, organizations } = useLedger();
   const navigate = useNavigate();
 
   const [orgName, setOrgName] = useState('');
@@ -33,6 +33,13 @@ export const CreateOrganization = () => {
     const name = orgName.trim();
     if (!name) {
       setError('Organization name is required.');
+      return;
+    }
+    const duplicate = organizations.some(
+      (o) => o.name.trim().toLowerCase() === name.toLowerCase(),
+    );
+    if (duplicate) {
+      setError(`An organization named "${name}" already exists.`);
       return;
     }
     const missingLines = BUDGET_LINES.filter(
