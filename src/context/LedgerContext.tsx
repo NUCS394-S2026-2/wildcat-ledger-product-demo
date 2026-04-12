@@ -1,3 +1,4 @@
+import { onAuthStateChanged } from 'firebase/auth';
 import {
   addDoc,
   collection,
@@ -46,41 +47,67 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
   };
   const [selectedBudgetLine, setSelectedBudgetLine] = useState<BudgetLine | null>(null);
 
-  // Load clubs from Firestore where the logged-in user is an admin
+  // Load clubs from Firestore where the logged-in user is an admin.
+  // Re-runs whenever the auth user changes.
   useEffect(() => {
-    const userEmail = auth.currentUser?.email;
-    if (!userEmail) return;
+    let unsubSnapshot: (() => void) | null = null;
 
-    const orgsRef = collection(db, 'clubs');
-    const unsub = onSnapshot(orgsRef, async (snapshot) => {
-      const orgs: Organization[] = await Promise.all(
-        snapshot.docs
-          .filter((doc) => {
-            const admins: string[] = doc.data().admins ?? [];
-            return admins.includes(userEmail);
-          })
-          .map(async (doc) => {
-            const data = doc.data();
-            const txnsSnap = await getDocs(
-              collection(db, 'clubs', doc.id, 'transactions'),
-            );
-            const transactions: Transaction[] = txnsSnap.docs.map((t) => ({
-              id: t.id,
-              ...(t.data() as Omit<Transaction, 'id'>),
-            }));
-            return {
-              id: doc.id,
-              name: data.name as string,
-              admins: (data.admins ?? []) as string[],
-              budgetAllocations: data.budgetAllocations as BudgetAllocations,
-              transactions,
-            };
-          }),
-      );
-      setOrganizations(orgs);
+    let previousEmail: string | null = null;
+
+    const unsubAuth = onAuthStateChanged(auth, (firebaseUser) => {
+      const userEmail = firebaseUser?.email ?? null;
+
+      // Clean up any previous snapshot listener
+      if (unsubSnapshot) {
+        unsubSnapshot();
+        unsubSnapshot = null;
+      }
+
+      // If the user changed, clear the active org so they go through org selection
+      if (userEmail !== previousEmail) {
+        previousEmail = userEmail;
+        localStorage.removeItem('activeOrganizationId');
+        setActiveOrganizationIdState(null);
+        setOrganizations([]);
+      }
+
+      if (!userEmail) return;
+
+      const orgsRef = collection(db, 'clubs');
+      unsubSnapshot = onSnapshot(orgsRef, async (snapshot) => {
+        const orgs: Organization[] = await Promise.all(
+          snapshot.docs
+            .filter((doc) => {
+              const admins: string[] = doc.data().admins ?? [];
+              return admins.includes(userEmail);
+            })
+            .map(async (doc) => {
+              const data = doc.data();
+              const txnsSnap = await getDocs(
+                collection(db, 'clubs', doc.id, 'transactions'),
+              );
+              const transactions: Transaction[] = txnsSnap.docs.map((t) => ({
+                id: t.id,
+                ...(t.data() as Omit<Transaction, 'id'>),
+              }));
+              return {
+                id: doc.id,
+                name: data.name as string,
+                admins: (data.admins ?? []) as string[],
+                budgetAllocations: data.budgetAllocations as BudgetAllocations,
+                transactions,
+              };
+            }),
+        );
+        setOrganizations(orgs);
+      });
     });
-    return () => unsub();
-  }, [auth.currentUser?.email]);
+
+    return () => {
+      unsubAuth();
+      if (unsubSnapshot) unsubSnapshot();
+    };
+  }, []);
 
   // When active org changes, subscribe to its transactions in real-time
   useEffect(() => {

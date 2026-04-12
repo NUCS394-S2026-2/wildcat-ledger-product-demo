@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useLedger } from '../hooks/useLedger';
@@ -6,13 +5,6 @@ import { useLedger } from '../hooks/useLedger';
 export const OrganizationsPage = () => {
   const { organizations, setActiveOrganizationId } = useLedger();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (organizations.length === 1) {
-      setActiveOrganizationId(organizations[0].id);
-      navigate('/dashboard', { replace: true });
-    }
-  }, [organizations]);
 
   const handleSelectOrg = (id: string) => {
     setActiveOrganizationId(id);
