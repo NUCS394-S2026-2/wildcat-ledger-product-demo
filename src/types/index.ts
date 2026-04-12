@@ -49,6 +49,7 @@ export type BudgetAllocations = Record<BudgetLine, number>;
 export interface Organization {
   id: string;
   name: string;
+  admins: string[];
   budgetAllocations: BudgetAllocations;
   transactions: Transaction[];
 }

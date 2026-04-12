@@ -15,7 +15,11 @@ export const Dashboard = () => {
     <div className="wl-app">
       <Header onAddTransaction={() => setModalOpen(true)} />
       <div className="wl-main" style={{ paddingBottom: 0, paddingTop: 16 }}>
-        <button type="button" className="wl-btn-back" onClick={() => navigate('/')}>
+        <button
+          type="button"
+          className="wl-btn-back"
+          onClick={() => navigate('/organizations')}
+        >
           ← Back to Organizations
         </button>
       </div>

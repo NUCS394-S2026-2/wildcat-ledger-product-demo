@@ -22,7 +22,8 @@ export const LoginPage = () => {
       signInWithEmailLink(auth, stored, window.location.href)
         .then(() => {
           localStorage.removeItem(EMAIL_KEY);
-          navigate('/', { replace: true });
+          localStorage.removeItem('activeOrganizationId');
+          navigate('/organizations', { replace: true });
         })
         .catch((err: Error) => {
           setError(err.message ?? 'Sign-in failed. Please request a new link.');
