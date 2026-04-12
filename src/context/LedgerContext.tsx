@@ -11,7 +11,7 @@ import {
 } from 'firebase/firestore';
 import React, { createContext, useEffect, useMemo, useState } from 'react';
 
-import { db } from '../config/firebase';
+import { auth, db } from '../config/firebase';
 import {
   BudgetAllocations,
   BudgetLine,
@@ -46,30 +46,41 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
   };
   const [selectedBudgetLine, setSelectedBudgetLine] = useState<BudgetLine | null>(null);
 
-  // Load all clubs from Firestore on mount
+  // Load clubs from Firestore where the logged-in user is an admin
   useEffect(() => {
+    const userEmail = auth.currentUser?.email;
+    if (!userEmail) return;
+
     const orgsRef = collection(db, 'clubs');
     const unsub = onSnapshot(orgsRef, async (snapshot) => {
       const orgs: Organization[] = await Promise.all(
-        snapshot.docs.map(async (doc) => {
-          const data = doc.data();
-          const txnsSnap = await getDocs(collection(db, 'clubs', doc.id, 'transactions'));
-          const transactions: Transaction[] = txnsSnap.docs.map((t) => ({
-            id: t.id,
-            ...(t.data() as Omit<Transaction, 'id'>),
-          }));
-          return {
-            id: doc.id,
-            name: data.name as string,
-            budgetAllocations: data.budgetAllocations as BudgetAllocations,
-            transactions,
-          };
-        }),
+        snapshot.docs
+          .filter((doc) => {
+            const admins: string[] = doc.data().admins ?? [];
+            return admins.includes(userEmail);
+          })
+          .map(async (doc) => {
+            const data = doc.data();
+            const txnsSnap = await getDocs(
+              collection(db, 'clubs', doc.id, 'transactions'),
+            );
+            const transactions: Transaction[] = txnsSnap.docs.map((t) => ({
+              id: t.id,
+              ...(t.data() as Omit<Transaction, 'id'>),
+            }));
+            return {
+              id: doc.id,
+              name: data.name as string,
+              admins: (data.admins ?? []) as string[],
+              budgetAllocations: data.budgetAllocations as BudgetAllocations,
+              transactions,
+            };
+          }),
       );
       setOrganizations(orgs);
     });
     return () => unsub();
-  }, []);
+  }, [auth.currentUser?.email]);
 
   // When active org changes, subscribe to its transactions in real-time
   useEffect(() => {

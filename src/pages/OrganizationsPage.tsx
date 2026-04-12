@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useLedger } from '../hooks/useLedger';
@@ -5,6 +6,13 @@ import { useLedger } from '../hooks/useLedger';
 export const OrganizationsPage = () => {
   const { organizations, setActiveOrganizationId } = useLedger();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (organizations.length === 1) {
+      setActiveOrganizationId(organizations[0].id);
+      navigate('/dashboard', { replace: true });
+    }
+  }, [organizations]);
 
   const handleSelectOrg = (id: string) => {
     setActiveOrganizationId(id);
@@ -34,15 +42,11 @@ export const OrganizationsPage = () => {
               <span className="wl-org-card-name">{org.name}</span>
             </button>
           ))}
-          <button
-            type="button"
-            className="wl-org-card wl-org-card--create"
-            onClick={() => navigate('/setup')}
-          >
-            <span className="wl-org-card-create-icon">+</span>
-            <span className="wl-org-card-name">Create Organization</span>
-            <span className="wl-org-card-hint">Start tracking your budget</span>
-          </button>
+          {organizations.length === 0 && (
+            <p className="wl-register-subtitle">
+              No organizations found for your account.
+            </p>
+          )}
         </div>
       </div>
     </div>
