@@ -2,12 +2,7 @@ import { useState } from 'react';
 
 import { useLedger } from '../hooks/useLedger';
 import { Transaction } from '../types';
-import {
-  formatCurrency,
-  getMissingRequirements,
-  isTransactionFlagged,
-} from '../utilities/calculations';
-import { StatusBadge } from './StatusBadge';
+import { formatCurrency } from '../utilities/calculations';
 import { TransactionModal } from './TransactionModal';
 
 const TransactionRow = ({
@@ -20,15 +15,11 @@ const TransactionRow = ({
   onDelete: (t: Transaction) => void;
 }) => {
   const isInflow = t.direction === 'Inflow';
-  const flagged = isTransactionFlagged(t);
-  const missing = getMissingRequirements(t);
 
   return (
-    <tr className={flagged ? 'wl-row--flagged' : ''}>
-      <td className="wl-td wl-td-date">{t.date}</td>
+    <tr>
       <td className="wl-td wl-td-title">
         <span className="wl-td-title-text">{t.title}</span>
-        {t.notes && <span className="wl-td-notes">{t.notes}</span>}
       </td>
       <td
         className={`wl-td wl-td-amount ${isInflow ? 'wl-amount-positive' : 'wl-amount-negative'}`}
@@ -39,23 +30,6 @@ const TransactionRow = ({
       <td className="wl-td wl-td-type">{t.type}</td>
       <td className="wl-td wl-td-budget">
         <span className="wl-budget-chip">{t.budgetLine}</span>
-      </td>
-      <td className="wl-td wl-td-person">{t.person}</td>
-      <td className="wl-td">
-        <StatusBadge status={t.status} />
-      </td>
-      <td className="wl-td wl-td-flags">
-        {missing.length > 0 ? (
-          <div className="wl-flag-tags">
-            {missing.map((m) => (
-              <span key={m} className="wl-flag-tag">
-                {m}
-              </span>
-            ))}
-          </div>
-        ) : (
-          <span className="wl-td-ok">✓</span>
-        )}
       </td>
       <td className="wl-td wl-td-actions">
         <button
@@ -107,14 +81,10 @@ export const TransactionList = () => {
           <table className="wl-table" aria-label="Transactions">
             <thead>
               <tr>
-                <th className="wl-th">Date</th>
                 <th className="wl-th">Title</th>
                 <th className="wl-th">Amount</th>
                 <th className="wl-th">Type</th>
                 <th className="wl-th">Budget Line</th>
-                <th className="wl-th">Person</th>
-                <th className="wl-th">Status</th>
-                <th className="wl-th">Requirements</th>
                 <th className="wl-th">Actions</th>
               </tr>
             </thead>

@@ -1,20 +1,14 @@
 export type BudgetLine = 'ASG' | 'Operating' | 'Gifts' | 'Debit Card';
 
+export type Funding = 'ASG' | 'Operating' | 'Gifts';
+
 export type TransactionType =
   | 'Reimbursement'
-  | 'Fundraiser deposit'
   | 'Debit card purchase'
-  | 'Transfer'
   | 'Direct payment'
-  | 'Other';
-
-export type FundingSource = 'SOFO' | 'ASG' | 'Gift' | 'Fundraiser' | 'Transfer';
-
-export type TransactionStatus = 'Draft' | 'Ready' | 'Submitted';
+  | 'Deposit';
 
 export type TransactionDirection = 'Inflow' | 'Outflow';
-
-export type FilterType = 'All' | 'Inflow' | 'Outflow' | 'Flagged' | 'Submitted';
 
 export interface Transaction {
   id: string;
@@ -22,14 +16,19 @@ export interface Transaction {
   amount: number;
   direction: TransactionDirection;
   type: TransactionType;
-  fundingSource: FundingSource;
+  funding?: Funding;
   budgetLine: BudgetLine;
-  person: string;
-  date: string;
-  status: TransactionStatus;
-  hasReceipt: boolean;
-  hasSignature: boolean;
   notes: string;
+  // Reimbursement
+  zelleInfo?: string;
+  // Direct payment
+  isIndividualVendor?: boolean;
+  // Document filenames (stored when user attaches files)
+  receiptFileName?: string;
+  contractFileName?: string;
+  w9FileName?: string;
+  contractedServicesFileName?: string;
+  conflictOfInterestFileName?: string;
 }
 
 export interface BudgetLineSummaryData {
@@ -43,7 +42,6 @@ export interface OverallSummaryData {
   totalBalance: number;
   totalInflow: number;
   totalOutflow: number;
-  flaggedCount: number;
 }
 
 export type BudgetAllocations = Record<BudgetLine, number>;
@@ -67,8 +65,6 @@ export interface LedgerContextValue {
   updateBudgetAllocations: (allocations: BudgetAllocations) => Promise<void>;
   selectedBudgetLine: BudgetLine | null;
   setSelectedBudgetLine: (line: BudgetLine | null) => void;
-  activeFilter: FilterType;
-  setActiveFilter: (filter: FilterType) => void;
   filteredTransactions: Transaction[];
   budgetLineSummaries: BudgetLineSummaryData[];
   overallSummary: OverallSummaryData;

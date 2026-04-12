@@ -3,7 +3,7 @@ import { formatCurrency } from '../utilities/calculations';
 
 export const OverallSummary = () => {
   const { overallSummary } = useLedger();
-  const { totalBalance, totalInflow, totalOutflow, flaggedCount } = overallSummary;
+  const { totalBalance, totalInflow, totalOutflow } = overallSummary;
 
   return (
     <section aria-label="Overall summary" className="wl-overall-grid">
@@ -26,13 +26,6 @@ export const OverallSummary = () => {
         <span className="wl-overall-value wl-amount-negative">
           -{formatCurrency(totalOutflow)}
         </span>
-      </div>
-      <div
-        className={`wl-overall-card wl-overall-card--flagged${flaggedCount > 0 ? ' wl-overall-card--has-flags' : ''}`}
-      >
-        <span className="wl-overall-label">Incomplete</span>
-        <span className="wl-overall-value">{flaggedCount}</span>
-        <span className="wl-overall-sublabel">transactions</span>
       </div>
     </section>
   );
