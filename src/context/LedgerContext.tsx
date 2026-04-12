@@ -6,8 +6,6 @@ import {
   getDocs,
   increment,
   onSnapshot,
-  orderBy,
-  query,
   setDoc,
   updateDoc,
 } from 'firebase/firestore';
@@ -17,7 +15,6 @@ import { db } from '../config/firebase';
 import {
   BudgetAllocations,
   BudgetLine,
-  FilterType,
   LedgerContextValue,
   Organization,
   Transaction,
@@ -48,7 +45,6 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     setActiveOrganizationIdState(id);
   };
   const [selectedBudgetLine, setSelectedBudgetLine] = useState<BudgetLine | null>(null);
-  const [activeFilter, setActiveFilter] = useState<FilterType>('All');
 
   // Load all clubs from Firestore on mount
   useEffect(() => {
@@ -57,12 +53,7 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
       const orgs: Organization[] = await Promise.all(
         snapshot.docs.map(async (doc) => {
           const data = doc.data();
-          const txnsSnap = await getDocs(
-            query(
-              collection(db, 'clubs', doc.id, 'transactions'),
-              orderBy('date', 'desc'),
-            ),
-          );
+          const txnsSnap = await getDocs(collection(db, 'clubs', doc.id, 'transactions'));
           const transactions: Transaction[] = txnsSnap.docs.map((t) => ({
             id: t.id,
             ...(t.data() as Omit<Transaction, 'id'>),
@@ -83,10 +74,7 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
   // When active org changes, subscribe to its transactions in real-time
   useEffect(() => {
     if (!activeOrganizationId) return;
-    const txnsRef = query(
-      collection(db, 'clubs', activeOrganizationId, 'transactions'),
-      orderBy('date', 'desc'),
-    );
+    const txnsRef = collection(db, 'clubs', activeOrganizationId, 'transactions');
     const unsub = onSnapshot(txnsRef, (snapshot) => {
       const transactions: Transaction[] = snapshot.docs.map((doc) => ({
         id: doc.id,
@@ -137,10 +125,14 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     });
   };
 
+  // Firestore rejects undefined field values — strip them before every write.
+  const toFirestore = (transaction: Omit<Transaction, 'id'>) =>
+    Object.fromEntries(Object.entries(transaction).filter(([, v]) => v !== undefined));
+
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     if (!activeOrganizationId) return;
     const txnsRef = collection(db, 'clubs', activeOrganizationId, 'transactions');
-    await addDoc(txnsRef, transaction);
+    await addDoc(txnsRef, toFirestore(transaction));
     await applyDelta(
       activeOrganizationId,
       transaction.budgetLine,
@@ -153,7 +145,7 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     if (!activeOrganizationId) return;
     const old = activeOrganization?.transactions.find((t) => t.id === id);
     const txnRef = doc(db, 'clubs', activeOrganizationId, 'transactions', id);
-    await updateDoc(txnRef, { ...transaction });
+    await updateDoc(txnRef, toFirestore(transaction));
     if (old)
       await reverseDelta(activeOrganizationId, old.budgetLine, old.direction, old.amount);
     await applyDelta(
@@ -186,8 +178,8 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
   const budgetAllocations = activeOrganization?.budgetAllocations ?? EMPTY_ALLOCATIONS;
 
   const filteredTransactions = useMemo(
-    () => applyFilters(transactions, selectedBudgetLine, activeFilter),
-    [transactions, selectedBudgetLine, activeFilter],
+    () => applyFilters(transactions, selectedBudgetLine),
+    [transactions, selectedBudgetLine],
   );
 
   const budgetLineSummaries = useMemo(
@@ -212,8 +204,6 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     updateBudgetAllocations,
     selectedBudgetLine,
     setSelectedBudgetLine,
-    activeFilter,
-    setActiveFilter,
     filteredTransactions,
     budgetLineSummaries,
     overallSummary,

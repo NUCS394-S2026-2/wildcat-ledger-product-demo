@@ -632,6 +632,51 @@
   cursor: pointer;
 }
 
+.wl-form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 14px 16px;
+  background: var(--color-bg-subtle, #f8f7fb);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.wl-form-file {
+  padding: 6px 8px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  color: var(--color-text);
+  background: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  width: 100%;
+}
+
+.wl-form-file::-webkit-file-upload-button {
+  padding: 4px 10px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 0.8rem;
+  font-family: inherit;
+  cursor: pointer;
+  margin-right: 8px;
+}
+
+.wl-form-file-existing {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.wl-form-required {
+  color: var(--color-flag-text, #b91c1c);
+  margin-left: 1px;
+}
+
 .wl-form-error {
   background: var(--color-flag-bg);
   color: var(--color-flag-text);
@@ -1262,10 +1307,6 @@ tbody tr:last-child .wl-td {
   transition:
     color 0.15s,
     background 0.15s;
-  opacity: 0;
-}
-
-tr:hover .wl-action-btn {
   opacity: 1;
 }
 
