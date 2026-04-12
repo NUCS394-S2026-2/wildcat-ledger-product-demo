@@ -6,7 +6,17 @@ import { BudgetLineCard } from './BudgetLineCard';
 export const BudgetLineSummary = () => {
   const { budgetLineSummaries, selectedBudgetLine, setSelectedBudgetLine } = useLedger();
 
-  const totalRemaining = budgetLineSummaries.reduce((sum, s) => sum + s.balance, 0);
+  const selectedSummary = selectedBudgetLine
+    ? budgetLineSummaries.find((s) => s.line === selectedBudgetLine)
+    : null;
+
+  const displayTotal = selectedSummary
+    ? selectedSummary.balance
+    : budgetLineSummaries.reduce((sum, s) => sum + s.balance, 0);
+
+  const totalLabel = selectedSummary
+    ? `${selectedSummary.line} remaining`
+    : 'Total remaining';
 
   const handleCardClick = (line: BudgetLine) => {
     setSelectedBudgetLine(selectedBudgetLine === line ? null : line);
@@ -17,19 +27,10 @@ export const BudgetLineSummary = () => {
       <div className="wl-section-header">
         <h2 className="wl-section-title">Budget Lines</h2>
         <span
-          className={`wl-total-remaining ${totalRemaining >= 0 ? 'wl-amount-positive' : 'wl-amount-negative'}`}
+          className={`wl-total-remaining ${displayTotal >= 0 ? 'wl-amount-positive' : 'wl-amount-negative'}`}
         >
-          Total remaining: {formatCurrency(totalRemaining)}
+          {totalLabel}: {formatCurrency(displayTotal)}
         </span>
-        {selectedBudgetLine && (
-          <button
-            type="button"
-            className="wl-clear-filter"
-            onClick={() => setSelectedBudgetLine(null)}
-          >
-            Clear filter ×
-          </button>
-        )}
       </div>
       <div className="wl-budget-grid">
         {budgetLineSummaries.map((summary) => (
