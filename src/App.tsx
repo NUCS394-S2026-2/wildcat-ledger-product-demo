@@ -9,6 +9,7 @@ import { CreateOrganization } from './pages/CreateOrganization';
 import { Dashboard } from './pages/Dashboard';
 import { LoginPage } from './pages/LoginPage';
 import { OrganizationsPage } from './pages/OrganizationsPage';
+import { Settings } from './pages/Settings';
 
 const ProtectedLayout = () => {
   const { user, loading } = useAuth();
@@ -29,6 +30,7 @@ const App = () => (
         <Route element={<ProtectedLayout />}>
           <Route path="/organizations" element={<OrganizationsPage />} />
           <Route path="/budget-setup" element={<CreateOrganization />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="/dashboard" element={<Dashboard />} />
         </Route>
         <Route path="*" element={<Navigate to="/login" replace />} />

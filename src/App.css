@@ -100,6 +100,24 @@
   opacity: 0.9;
 }
 
+.wl-btn-header-icon {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wl-btn-header-icon:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
 /* ─── Cards ─────────────────────────────────────────────────────── */
 .wl-card {
   background: var(--color-card);
