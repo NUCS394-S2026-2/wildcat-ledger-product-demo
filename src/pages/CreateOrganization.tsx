@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useLedger } from '../hooks/useLedger';
@@ -13,12 +13,25 @@ const EMPTY_ALLOCATIONS: BudgetAllocations = {
 };
 
 export const CreateOrganization = () => {
-  const { addOrganization, organizations } = useLedger();
+  const { activeOrganization, initializeBudgetAllocations } = useLedger();
   const navigate = useNavigate();
 
-  const [orgName, setOrgName] = useState('');
   const [allocations, setAllocations] = useState<BudgetAllocations>(EMPTY_ALLOCATIONS);
   const [rawInputs, setRawInputs] = useState<Record<string, string>>({});
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Guard: no active org selected — send back to org picker
+  useEffect(() => {
+    if (!activeOrganization) {
+      navigate('/organizations', { replace: true });
+      return;
+    }
+    // Guard: budget already initialized — skip straight to dashboard
+    if (activeOrganization.isBudgetLineSet) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [activeOrganization, navigate]);
 
   const setAllocation = (line: keyof BudgetAllocations, raw: string) => {
     if (!/^\d*\.?\d{0,2}$/.test(raw)) return;
@@ -27,61 +40,35 @@ export const CreateOrganization = () => {
     setAllocations((prev) => ({ ...prev, [line]: isNaN(val) ? 0 : val }));
   };
 
-  const [error, setError] = useState<string | null>(null);
-
   const handleSubmit = async () => {
-    const name = orgName.trim();
-    if (!name) {
-      setError('Organization name is required.');
-      return;
-    }
-    const duplicate = organizations.some(
-      (o) => o.name.trim().toLowerCase() === name.toLowerCase(),
-    );
-    if (duplicate) {
-      setError(`An organization named "${name}" already exists.`);
-      return;
-    }
     const missingLines = BUDGET_LINES.filter(
       (line) => rawInputs[line] === undefined || rawInputs[line] === '',
     );
     if (missingLines.length > 0) {
-      setError(`Please enter a value for: ${missingLines.join(', ')}.`);
+      setError(`Please enter a starting amount for: ${missingLines.join(', ')}.`);
       return;
     }
     setError(null);
+    setSubmitting(true);
     try {
-      await addOrganization(name, allocations);
-      navigate('/');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create organization.');
+      await initializeBudgetAllocations(allocations);
+      navigate('/dashboard', { replace: true });
+    } catch {
+      setError('Failed to save budget allocations. Please try again.');
+      setSubmitting(false);
     }
   };
+
+  if (!activeOrganization) return null;
 
   return (
     <div className="wl-register-root">
       <div className="wl-register-card">
         <h1 className="wl-register-title">WildcatLedger</h1>
         <p className="wl-register-subtitle">
-          Set up your organization&apos;s budget allocations to get started.
+          Set starting budget amounts for <strong>{activeOrganization.name}</strong>.
         </p>
         <div className="wl-budget-allocation-form">
-          <div className="wl-budget-allocation-row">
-            <label className="wl-budget-allocation-label" htmlFor="org-name">
-              Organization Name
-            </label>
-            <div className="wl-budget-allocation-input-wrap">
-              <input
-                id="org-name"
-                type="text"
-                className="wl-form-input"
-                value={orgName}
-                placeholder="Enter organization name"
-                onChange={(e) => setOrgName(e.target.value)}
-              />
-            </div>
-            <span className="wl-budget-allocation-preview" />
-          </div>
           {BUDGET_LINES.map((line) => (
             <div key={line} className="wl-budget-allocation-row">
               <label className="wl-budget-allocation-label" htmlFor={`budget-${line}`}>
@@ -114,8 +101,9 @@ export const CreateOrganization = () => {
           type="button"
           className="wl-btn-primary wl-register-done"
           onClick={handleSubmit}
+          disabled={submitting}
         >
-          Create Organization
+          {submitting ? 'Saving…' : 'Save & Continue'}
         </button>
       </div>
     </div>
