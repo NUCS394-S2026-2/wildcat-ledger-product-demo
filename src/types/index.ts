@@ -51,6 +51,7 @@ export interface Organization {
   name: string;
   admins: string[];
   budgetAllocations: BudgetAllocations;
+  isBudgetLineSet: boolean;
   transactions: Transaction[];
 }
 
@@ -64,6 +65,7 @@ export interface LedgerContextValue {
   updateTransaction: (id: string, transaction: Omit<Transaction, 'id'>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
   updateBudgetAllocations: (allocations: BudgetAllocations) => Promise<void>;
+  initializeBudgetAllocations: (allocations: BudgetAllocations) => Promise<void>;
   selectedBudgetLine: BudgetLine | null;
   setSelectedBudgetLine: (line: BudgetLine | null) => void;
   filteredTransactions: Transaction[];
