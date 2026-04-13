@@ -1,14 +1,19 @@
 import { useNavigate } from 'react-router-dom';
 
 import { useLedger } from '../hooks/useLedger';
+import { Organization } from '../types';
 
 export const OrganizationsPage = () => {
   const { organizations, setActiveOrganizationId } = useLedger();
   const navigate = useNavigate();
 
-  const handleSelectOrg = (id: string) => {
-    setActiveOrganizationId(id);
-    navigate('/dashboard');
+  const handleSelectOrg = (org: Organization) => {
+    setActiveOrganizationId(org.id);
+    if (org.isBudgetLineSet) {
+      navigate('/dashboard');
+    } else {
+      navigate('/budget-setup');
+    }
   };
 
   return (
@@ -19,9 +24,7 @@ export const OrganizationsPage = () => {
           <p className="wl-onboarding-tagline">
             Track and manage your club&apos;s finances
           </p>
-          <p className="wl-register-subtitle">
-            Create or select an organization to get started
-          </p>
+          <p className="wl-register-subtitle">Select an organization to get started</p>
         </div>
         <div className="wl-org-grid">
           {organizations.map((org) => (
@@ -29,7 +32,7 @@ export const OrganizationsPage = () => {
               key={org.id}
               type="button"
               className="wl-org-card"
-              onClick={() => handleSelectOrg(org.id)}
+              onClick={() => handleSelectOrg(org)}
             >
               <span className="wl-org-card-name">{org.name}</span>
             </button>
