@@ -95,6 +95,7 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
                 name: data.name as string,
                 admins: (data.admins ?? []) as string[],
                 budgetAllocations: data.budgetAllocations as BudgetAllocations,
+                isBudgetLineSet: (data.isBudgetLineSet as boolean) ?? false,
                 transactions,
               };
             }),
@@ -209,6 +210,14 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     await updateDoc(orgRef, { budgetAllocations: allocations });
   };
 
+  // Sets the initial budget allocations and locks the flag so it cannot be
+  // done again through the normal onboarding flow.
+  const initializeBudgetAllocations = async (allocations: BudgetAllocations) => {
+    if (!activeOrganizationId) return;
+    const orgRef = doc(db, 'clubs', activeOrganizationId);
+    await updateDoc(orgRef, { budgetAllocations: allocations, isBudgetLineSet: true });
+  };
+
   const activeOrganization =
     organizations.find((o: Organization) => o.id === activeOrganizationId) ?? null;
 
@@ -240,6 +249,7 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     updateTransaction,
     deleteTransaction,
     updateBudgetAllocations,
+    initializeBudgetAllocations,
     selectedBudgetLine,
     setSelectedBudgetLine,
     filteredTransactions,
