@@ -92,6 +92,7 @@ export const AddTransactionForm = ({
     return initialForm;
   });
 
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [overdraftWarning, setOverdraftWarning] = useState<string | null>(null);
   const [pendingTransaction, setPendingTransaction] = useState<Omit<
@@ -147,19 +148,25 @@ export const AddTransactionForm = ({
   };
 
   const submitTransaction = async (transaction: Omit<Transaction, 'id'>) => {
-    if (isEditing && existingTransaction) {
-      await updateTransaction(existingTransaction.id, transaction);
-    } else {
-      await addTransaction(transaction);
+    setSubmitting(true);
+    try {
+      if (isEditing && existingTransaction) {
+        await updateTransaction(existingTransaction.id, transaction);
+      } else {
+        await addTransaction(transaction);
+      }
+      setForm(initialForm);
+      setPendingTransaction(null);
+      setOverdraftWarning(null);
+      onSuccess?.();
+    } finally {
+      setSubmitting(false);
     }
-    setForm(initialForm);
-    setPendingTransaction(null);
-    setOverdraftWarning(null);
-    onSuccess?.();
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (submitting) return;
     const amount = parseFloat(form.amount);
 
     if (!form.title.trim()) {
@@ -555,8 +562,8 @@ export const AddTransactionForm = ({
       )}
 
       {!overdraftWarning && (
-        <button type="submit" className="wl-btn-primary">
-          {isEditing ? 'Save Changes' : 'Add Transaction'}
+        <button type="submit" className="wl-btn-primary" disabled={submitting}>
+          {submitting ? 'Saving…' : isEditing ? 'Save Changes' : 'Add Transaction'}
         </button>
       )}
     </form>

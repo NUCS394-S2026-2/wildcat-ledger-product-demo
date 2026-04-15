@@ -64,7 +64,7 @@ export interface Organization {
   name: string;
   admins: string[];
   budgetAllocations: BudgetAllocations;
-  isBudgetLineSet: boolean;
+  isBudgetLinesSet: boolean;
   transactions: Transaction[];
 }
 
