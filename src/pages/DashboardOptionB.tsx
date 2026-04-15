@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { TransactionList } from '../components/TransactionList';
@@ -16,6 +16,12 @@ export const DashboardOptionB = () => {
     setSelectedBudgetLine,
     activeOrganization,
   } = useLedger();
+
+  useEffect(() => {
+    if (activeOrganization === null) {
+      navigate('/organizations', { replace: true });
+    }
+  }, [activeOrganization]);
 
   return (
     <div className="wl-app">
@@ -38,7 +44,11 @@ export const DashboardOptionB = () => {
         {/* Sidebar */}
         <aside className="wl-sidebar-optionB">
           <div className="wl-sidebar-header-optionB">
-            <button type="button" className="wl-btn-back" onClick={() => navigate('/')}>
+            <button
+              type="button"
+              className="wl-btn-back"
+              onClick={() => navigate('/organizations')}
+            >
               ← Back
             </button>
           </div>
