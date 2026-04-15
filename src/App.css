@@ -1900,6 +1900,29 @@ tbody tr:last-child .wl-td {
 .wl-sidebar-footer-optionB {
   padding-top: 16px;
   border-top: 1px solid #f0eef8;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wl-sidebar-audit-btn {
+  width: 100%;
+  background: none;
+  color: #4e2a84;
+  border: 2px solid #4e2a84;
+  border-radius: 8px;
+  padding: 11px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.wl-sidebar-audit-btn:hover {
+  background: #4e2a84;
+  color: #fff;
 }
 
 .wl-sidebar-add-btn {
