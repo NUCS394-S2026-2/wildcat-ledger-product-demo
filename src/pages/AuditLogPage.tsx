@@ -14,30 +14,65 @@ const formatTimestamp = (ts: number) =>
 
 const actionLabel = (action: AuditEntry['action']) => {
   if (action === 'create')
-    return { label: 'Created', className: 'wl-audit-badge--create' };
-  if (action === 'edit') return { label: 'Edited', className: 'wl-audit-badge--edit' };
-  return { label: 'Deleted', className: 'wl-audit-badge--delete' };
+    return {
+      label: 'Created',
+      icon: '+',
+      className: 'wl-audit-badge--create',
+      entryClass: 'wl-audit-entry--create',
+    };
+  if (action === 'edit')
+    return {
+      label: 'Edited',
+      icon: '~',
+      className: 'wl-audit-badge--edit',
+      entryClass: 'wl-audit-entry--edit',
+    };
+  return {
+    label: 'Deleted',
+    icon: '×',
+    className: 'wl-audit-badge--delete',
+    entryClass: 'wl-audit-entry--delete',
+  };
 };
 
-const DiffRow = ({
-  field,
+const EditDiff = ({
+  changedKeys,
   before,
   after,
 }: {
-  field: string;
-  before: unknown;
-  after: unknown;
-}) => {
-  if (before === after) return null;
-  return (
-    <div className="wl-audit-diff-row">
-      <span className="wl-audit-diff-field">{field}</span>
-      <span className="wl-audit-diff-before">{String(before ?? '—')}</span>
-      <span className="wl-audit-diff-arrow">→</span>
-      <span className="wl-audit-diff-after">{String(after ?? '—')}</span>
+  changedKeys: string[];
+  before: Record<string, unknown>;
+  after: Record<string, unknown>;
+}) => (
+  <div className="wl-audit-diff">
+    <div className="wl-audit-snapshot wl-audit-snapshot--before">
+      <span className="wl-audit-snapshot-label">Before</span>
+      <div className="wl-audit-snapshot-rows">
+        {changedKeys.map((key) => (
+          <div key={key} className="wl-audit-snapshot-row">
+            <span className="wl-audit-diff-field">{key}</span>
+            <span className="wl-audit-snapshot-value wl-audit-snapshot-value--before">
+              {String(before[key] ?? '—')}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
-  );
-};
+    <div className="wl-audit-snapshot wl-audit-snapshot--after">
+      <span className="wl-audit-snapshot-label">After</span>
+      <div className="wl-audit-snapshot-rows">
+        {changedKeys.map((key) => (
+          <div key={key} className="wl-audit-snapshot-row">
+            <span className="wl-audit-diff-field">{key}</span>
+            <span className="wl-audit-snapshot-value wl-audit-snapshot-value--after">
+              {String(after[key] ?? '—')}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
 
 export const AuditLogPage = () => {
   const { auditLog, activeOrganization } = useLedger();
@@ -53,35 +88,59 @@ export const AuditLogPage = () => {
         >
           ← Back to Dashboard
         </button>
-        <h2 className="wl-audit-heading">Audit Log — {activeOrganization?.name ?? ''}</h2>
+        <div className="wl-audit-heading-row">
+          <h2 className="wl-audit-heading">Audit Log</h2>
+          {activeOrganization && (
+            <span className="wl-audit-org-badge">{activeOrganization.name}</span>
+          )}
+          {auditLog.length > 0 && (
+            <span className="wl-audit-count">
+              {auditLog.length} {auditLog.length === 1 ? 'entry' : 'entries'}
+            </span>
+          )}
+        </div>
         {auditLog.length === 0 ? (
-          <div className="wl-empty-state">
-            <p>No audit entries yet. Changes to transactions will appear here.</p>
+          <div className="wl-audit-empty">
+            <div className="wl-audit-empty-icon">☑</div>
+            <p className="wl-audit-empty-title">No activity yet</p>
+            <p className="wl-audit-empty-sub">
+              Changes to transactions will appear here.
+            </p>
           </div>
         ) : (
           <div className="wl-audit-list">
             {auditLog.map((entry) => {
-              const { label, className } = actionLabel(entry.action);
+              const { label, icon, className, entryClass } = actionLabel(entry.action);
+              const changedKeys =
+                entry.action === 'edit' && entry.before && entry.after
+                  ? Object.keys(entry.after).filter(
+                      (k) =>
+                        (entry.before as Record<string, unknown>)[k] !==
+                        (entry.after as Record<string, unknown>)[k],
+                    )
+                  : [];
               return (
-                <div key={entry.id} className="wl-audit-entry">
+                <div key={entry.id} className={`wl-audit-entry ${entryClass}`}>
                   <div className="wl-audit-entry-header">
-                    <span className={`wl-audit-badge ${className}`}>{label}</span>
-                    <span className="wl-audit-title">{entry.transactionTitle}</span>
-                    <span className="wl-audit-meta">
-                      by {entry.performedBy} · {formatTimestamp(entry.timestamp)}
+                    <span className={`wl-audit-badge ${className}`}>
+                      <span className="wl-audit-badge-icon">{icon}</span>
+                      {label}
                     </span>
-                  </div>
-                  {entry.action === 'edit' && entry.before && entry.after && (
-                    <div className="wl-audit-diff">
-                      {Object.keys(entry.after).map((key) => (
-                        <DiffRow
-                          key={key}
-                          field={key}
-                          before={(entry.before as Record<string, unknown>)[key]}
-                          after={(entry.after as Record<string, unknown>)[key]}
-                        />
-                      ))}
+                    <span className="wl-audit-title">{entry.transactionTitle}</span>
+                    <div className="wl-audit-meta">
+                      <span className="wl-audit-meta-user">{entry.performedBy}</span>
+                      <span className="wl-audit-meta-sep">·</span>
+                      <span className="wl-audit-meta-time">
+                        {formatTimestamp(entry.timestamp)}
+                      </span>
                     </div>
+                  </div>
+                  {changedKeys.length > 0 && (
+                    <EditDiff
+                      changedKeys={changedKeys}
+                      before={entry.before as Record<string, unknown>}
+                      after={entry.after as Record<string, unknown>}
+                    />
                   )}
                 </div>
               );
