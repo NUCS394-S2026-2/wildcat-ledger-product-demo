@@ -25,6 +25,12 @@ export const DashboardOptionB = () => {
     }
   }, [activeOrganization]);
 
+  useEffect(() => {
+    if (activeOrganization === null) {
+      navigate('/organizations', { replace: true });
+    }
+  }, [activeOrganization]);
+
   return (
     <div className="wl-app">
       <div className="wl-header-optionB">
