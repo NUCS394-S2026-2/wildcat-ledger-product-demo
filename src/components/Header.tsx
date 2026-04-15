@@ -1,3 +1,5 @@
+import { useNavigate } from 'react-router-dom';
+
 import { useLedger } from '../hooks/useLedger';
 
 interface HeaderProps {
@@ -6,6 +8,7 @@ interface HeaderProps {
 
 export const Header = ({ onAddTransaction }: HeaderProps) => {
   const { activeOrganization } = useLedger();
+  const navigate = useNavigate();
 
   return (
     <header className="wl-header">
@@ -18,6 +21,15 @@ export const Header = ({ onAddTransaction }: HeaderProps) => {
         <div className="wl-header-right">
           <button type="button" className="wl-btn-add" onClick={onAddTransaction}>
             + Add Transaction
+          </button>
+          <button
+            type="button"
+            className="wl-btn-header-icon"
+            onClick={() => navigate('/settings')}
+            aria-label="Settings"
+            title="Settings"
+          >
+            ⚙️
           </button>
         </div>
       </div>
