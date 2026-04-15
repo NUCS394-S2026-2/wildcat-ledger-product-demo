@@ -9,7 +9,7 @@ export const OrganizationsPage = () => {
 
   const handleSelectOrg = (org: Organization) => {
     setActiveOrganizationId(org.id);
-    if (org.isBudgetLineSet) {
+    if (org.isBudgetLinesSet) {
       navigate('/dashboard');
     } else {
       navigate('/budget-setup');

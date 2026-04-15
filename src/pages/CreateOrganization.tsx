@@ -28,7 +28,7 @@ export const CreateOrganization = () => {
       return;
     }
     // Guard: budget already initialized — skip straight to dashboard
-    if (activeOrganization.isBudgetLineSet) {
+    if (activeOrganization.isBudgetLinesSet) {
       navigate('/dashboard', { replace: true });
     }
   }, [activeOrganization, navigate]);

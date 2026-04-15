@@ -95,7 +95,7 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
                 name: data.name as string,
                 admins: (data.admins ?? []) as string[],
                 budgetAllocations: data.budgetAllocations as BudgetAllocations,
-                isBudgetLineSet: (data.isBudgetLineSet as boolean) ?? false,
+                isBudgetLinesSet: (data.isBudgetLinesSet as boolean) ?? false,
                 transactions,
               };
             }),
@@ -215,7 +215,7 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
   const initializeBudgetAllocations = async (allocations: BudgetAllocations) => {
     if (!activeOrganizationId) return;
     const orgRef = doc(db, 'clubs', activeOrganizationId);
-    await updateDoc(orgRef, { budgetAllocations: allocations, isBudgetLineSet: true });
+    await updateDoc(orgRef, { budgetAllocations: allocations, isBudgetLinesSet: true });
   };
 
   const activeOrganization =
