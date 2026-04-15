@@ -44,7 +44,11 @@ export const DashboardOptionB = () => {
         {/* Sidebar */}
         <aside className="wl-sidebar-optionB">
           <div className="wl-sidebar-header-optionB">
-            <button type="button" className="wl-btn-back" onClick={() => navigate('/')}>
+            <button
+              type="button"
+              className="wl-btn-back"
+              onClick={() => navigate('/organizations')}
+            >
               ← Back
             </button>
           </div>
