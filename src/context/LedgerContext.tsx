@@ -14,6 +14,8 @@ import React, { createContext, useEffect, useMemo, useState } from 'react';
 
 import { auth, db } from '../config/firebase';
 import {
+  AuditAction,
+  AuditEntry,
   BudgetAllocations,
   BudgetLine,
   LedgerContextValue,
@@ -37,6 +39,7 @@ const EMPTY_ALLOCATIONS: BudgetAllocations = {
 
 export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [auditLog, setAuditLog] = useState<AuditEntry[]>([]);
   const [activeOrganizationId, setActiveOrganizationIdState] = useState<string | null>(
     () => localStorage.getItem('activeOrganizationId'),
   );
@@ -110,11 +113,12 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
-  // When active org changes, subscribe to its transactions in real-time
+  // When active org changes, subscribe to its transactions and audit log in real-time
   useEffect(() => {
     if (!activeOrganizationId) return;
+
     const txnsRef = collection(db, 'clubs', activeOrganizationId, 'transactions');
-    const unsub = onSnapshot(txnsRef, (snapshot) => {
+    const unsubTxns = onSnapshot(txnsRef, (snapshot) => {
       const transactions: Transaction[] = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...(doc.data() as Omit<Transaction, 'id'>),
@@ -123,8 +127,40 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
         prev.map((o) => (o.id === activeOrganizationId ? { ...o, transactions } : o)),
       );
     });
-    return () => unsub();
+
+    const auditRef = collection(db, 'clubs', activeOrganizationId, 'auditLog');
+    const unsubAudit = onSnapshot(auditRef, (snapshot) => {
+      const entries: AuditEntry[] = snapshot.docs
+        .map((doc) => ({ id: doc.id, ...(doc.data() as Omit<AuditEntry, 'id'>) }))
+        .sort((a, b) => b.timestamp - a.timestamp);
+      setAuditLog(entries);
+    });
+
+    return () => {
+      unsubTxns();
+      unsubAudit();
+    };
   }, [activeOrganizationId]);
+
+  const writeAuditEntry = async (
+    action: AuditAction,
+    transactionId: string,
+    transactionTitle: string,
+    before: Omit<Transaction, 'id'> | null,
+    after: Omit<Transaction, 'id'> | null,
+  ) => {
+    if (!activeOrganizationId) return;
+    const userEmail = auth.currentUser?.email ?? 'unknown';
+    await addDoc(collection(db, 'clubs', activeOrganizationId, 'auditLog'), {
+      action,
+      performedBy: userEmail,
+      timestamp: Date.now(),
+      transactionId,
+      transactionTitle,
+      before: before ? toFirestore(before) : null,
+      after: after ? toFirestore(after) : null,
+    });
+  };
 
   const addOrganization = async (name: string, budgetAllocations: BudgetAllocations) => {
     const duplicate = organizations.some(
@@ -168,16 +204,23 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
   const toFirestore = (transaction: Omit<Transaction, 'id'>) =>
     Object.fromEntries(Object.entries(transaction).filter(([, v]) => v !== undefined));
 
+  const omitId = (t: Transaction): Omit<Transaction, 'id'> => {
+    const { id: omitted, ...rest } = t;
+    void omitted;
+    return rest;
+  };
+
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     if (!activeOrganizationId) return;
     const txnsRef = collection(db, 'clubs', activeOrganizationId, 'transactions');
-    await addDoc(txnsRef, toFirestore(transaction));
+    const ref = await addDoc(txnsRef, toFirestore(transaction));
     await applyDelta(
       activeOrganizationId,
       transaction.budgetLine,
       transaction.direction,
       transaction.amount,
     );
+    await writeAuditEntry('create', ref.id, transaction.title, null, transaction);
   };
 
   const updateTransaction = async (id: string, transaction: Omit<Transaction, 'id'>) => {
@@ -193,6 +236,8 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
       transaction.direction,
       transaction.amount,
     );
+    const oldWithoutId = old ? omitId(old) : null;
+    await writeAuditEntry('edit', id, transaction.title, oldWithoutId, transaction);
   };
 
   const deleteTransaction = async (id: string) => {
@@ -202,6 +247,8 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     await deleteDoc(txnRef);
     if (old)
       await reverseDelta(activeOrganizationId, old.budgetLine, old.direction, old.amount);
+    const oldWithoutId = old ? omitId(old) : null;
+    await writeAuditEntry('delete', id, old?.title ?? '', oldWithoutId, null);
   };
 
   const updateBudgetAllocations = async (allocations: BudgetAllocations) => {
@@ -240,6 +287,7 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
   );
 
   const value: LedgerContextValue = {
+    auditLog,
     organizations,
     addOrganization,
     activeOrganizationId,

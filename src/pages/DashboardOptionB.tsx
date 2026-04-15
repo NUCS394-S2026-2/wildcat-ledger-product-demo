@@ -80,6 +80,13 @@ export const DashboardOptionB = () => {
           <div className="wl-sidebar-footer-optionB">
             <button
               type="button"
+              className="wl-sidebar-audit-btn"
+              onClick={() => navigate('/audit-log')}
+            >
+              Audit History
+            </button>
+            <button
+              type="button"
               className="wl-sidebar-add-btn"
               onClick={() => setModalOpen(true)}
             >
