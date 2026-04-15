@@ -31,6 +31,19 @@ export interface Transaction {
   conflictOfInterestFileName?: string;
 }
 
+export type AuditAction = 'create' | 'edit' | 'delete';
+
+export interface AuditEntry {
+  id: string;
+  action: AuditAction;
+  performedBy: string;
+  timestamp: number;
+  transactionId: string;
+  transactionTitle: string;
+  before: Omit<Transaction, 'id'> | null;
+  after: Omit<Transaction, 'id'> | null;
+}
+
 export interface BudgetLineSummaryData {
   line: BudgetLine;
   balance: number;
@@ -56,6 +69,7 @@ export interface Organization {
 }
 
 export interface LedgerContextValue {
+  auditLog: AuditEntry[];
   organizations: Organization[];
   addOrganization: (name: string, budgetAllocations: BudgetAllocations) => Promise<void>;
   activeOrganizationId: string | null;

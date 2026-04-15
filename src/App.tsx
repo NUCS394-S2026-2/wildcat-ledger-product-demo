@@ -5,6 +5,7 @@ import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom
 import { AuthProvider } from './context/AuthContext';
 import { LedgerProvider } from './context/LedgerContext';
 import { useAuth } from './hooks/useAuth';
+import { AuditLogPage } from './pages/AuditLogPage';
 import { CreateOrganization } from './pages/CreateOrganization';
 import { Dashboard } from './pages/Dashboard';
 import { LoginPage } from './pages/LoginPage';
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/budget-setup" element={<CreateOrganization />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/audit-log" element={<AuditLogPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>

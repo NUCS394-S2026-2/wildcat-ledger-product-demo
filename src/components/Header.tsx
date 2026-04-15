@@ -25,6 +25,15 @@ export const Header = ({ onAddTransaction }: HeaderProps) => {
           <button
             type="button"
             className="wl-btn-header-icon"
+            onClick={() => navigate('/audit-log')}
+            aria-label="Audit Log"
+            title="Audit Log"
+          >
+            📋
+          </button>
+          <button
+            type="button"
+            className="wl-btn-header-icon"
             onClick={() => navigate('/settings')}
             aria-label="Settings"
             title="Settings"
