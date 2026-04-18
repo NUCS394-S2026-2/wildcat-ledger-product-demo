@@ -33,15 +33,6 @@ export const Header = ({ onAddTransaction }: HeaderProps) => {
           >
             📋
           </button>
-          <button
-            type="button"
-            className="wl-btn-header-icon"
-            onClick={() => navigate('/settings')}
-            aria-label="Settings"
-            title="Settings"
-          >
-            ⚙️
-          </button>
         </div>
       </div>
     </header>
