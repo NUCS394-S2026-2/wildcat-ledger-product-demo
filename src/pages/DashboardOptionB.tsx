@@ -53,16 +53,6 @@ export const DashboardOptionB = () => {
       <div className="wl-dashboard-optionB">
         {/* Sidebar */}
         <aside className="wl-sidebar-optionB">
-          <div className="wl-sidebar-header-optionB">
-            <button
-              type="button"
-              className="wl-btn-back"
-              onClick={() => navigate('/organizations')}
-            >
-              ← Back
-            </button>
-          </div>
-
           <div className="wl-sidebar-section-optionB">
             <h3 className="wl-sidebar-title-optionB">Filter</h3>
             <button
