@@ -2267,7 +2267,7 @@ tbody tr:last-child .wl-td {
   margin-bottom: 12px;
   color: var(--color-text, #111827);
 }
-.wl-budget-allocation-fixed input:disabled {
+.wl-budget-allocation-input:disabled {
   background: var(--color-surface-alt, #f3f4f6);
   color: var(--color-text-muted, #9ca3af);
   cursor: not-allowed;
