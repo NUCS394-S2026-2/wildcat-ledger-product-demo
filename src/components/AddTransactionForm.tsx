@@ -1,5 +1,7 @@
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import React, { useState } from 'react';
 
+import { storage } from '../config/firebase';
 import { useLedger } from '../hooks/useLedger';
 import { BudgetLine, Transaction, TransactionType } from '../types';
 
@@ -65,7 +67,8 @@ export const AddTransactionForm = ({
   onSuccess,
   existingTransaction,
 }: AddTransactionFormProps) => {
-  const { addTransaction, updateTransaction, budgetLineSummaries } = useLedger();
+  const { addTransaction, updateTransaction, budgetLineSummaries, activeOrganizationId } =
+    useLedger();
   const isEditing = !!existingTransaction;
 
   const [form, setForm] = useState<FormState>(() => {
@@ -164,7 +167,14 @@ export const AddTransactionForm = ({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const uploadFile = async (file: File): Promise<string> => {
+    const path = `clubs/${activeOrganizationId}/transactions/${Date.now()}_${file.name}`;
+    const storageRef = ref(storage, path);
+    await uploadBytes(storageRef, file);
+    return getDownloadURL(storageRef);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (submitting) return;
     const amount = parseFloat(form.amount);
@@ -231,6 +241,24 @@ export const AddTransactionForm = ({
     const budgetLine = deriveBudgetLine(form.type, form.funding);
     const direction = deriveDirection(form.type);
 
+    // Upload any new files to Firebase Storage and get their download URLs.
+    // If editing and no new file was selected, preserve the existing URL.
+    const receiptFileUrl = form.receiptFile
+      ? await uploadFile(form.receiptFile)
+      : existingTransaction?.receiptFileUrl;
+    const contractFileUrl = form.contractFile
+      ? await uploadFile(form.contractFile)
+      : existingTransaction?.contractFileUrl;
+    const w9FileUrl = form.w9File
+      ? await uploadFile(form.w9File)
+      : existingTransaction?.w9FileUrl;
+    const contractedServicesFileUrl = form.contractedServicesFile
+      ? await uploadFile(form.contractedServicesFile)
+      : existingTransaction?.contractedServicesFileUrl;
+    const conflictOfInterestFileUrl = form.conflictOfInterestFile
+      ? await uploadFile(form.conflictOfInterestFile)
+      : existingTransaction?.conflictOfInterestFileUrl;
+
     const newTransaction: Omit<Transaction, 'id'> = {
       title: form.title.trim(),
       amount,
@@ -242,11 +270,11 @@ export const AddTransactionForm = ({
       zelleInfo: form.type === 'Reimbursement' ? form.zelleInfo.trim() : undefined,
       isIndividualVendor:
         form.type === 'Direct payment' ? form.isIndividualVendor : undefined,
-      receiptFileName: form.receiptFile?.name,
-      contractFileName: form.contractFile?.name,
-      w9FileName: form.w9File?.name,
-      contractedServicesFileName: form.contractedServicesFile?.name,
-      conflictOfInterestFileName: form.conflictOfInterestFile?.name,
+      receiptFileUrl,
+      contractFileUrl,
+      w9FileUrl,
+      contractedServicesFileUrl,
+      conflictOfInterestFileUrl,
     };
 
     if (direction === 'Outflow') {
@@ -370,9 +398,16 @@ export const AddTransactionForm = ({
               className="wl-form-file"
               onChange={handleChange}
             />
-            {isEditing && existingTransaction?.receiptFileName && (
+            {isEditing && existingTransaction?.receiptFileUrl && (
               <span className="wl-form-file-existing">
-                Current: {existingTransaction.receiptFileName}
+                Current:{' '}
+                <a
+                  href={existingTransaction.receiptFileUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  View file
+                </a>
               </span>
             )}
           </div>
@@ -393,9 +428,16 @@ export const AddTransactionForm = ({
                 className="wl-form-file"
                 onChange={handleChange}
               />
-              {isEditing && existingTransaction?.contractFileName && (
+              {isEditing && existingTransaction?.contractFileUrl && (
                 <span className="wl-form-file-existing">
-                  Current: {existingTransaction.contractFileName}
+                  Current:{' '}
+                  <a
+                    href={existingTransaction.contractFileUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    View file
+                  </a>
                 </span>
               )}
             </div>
@@ -412,9 +454,16 @@ export const AddTransactionForm = ({
                 className="wl-form-file"
                 onChange={handleChange}
               />
-              {isEditing && existingTransaction?.w9FileName && (
+              {isEditing && existingTransaction?.w9FileUrl && (
                 <span className="wl-form-file-existing">
-                  Current: {existingTransaction.w9FileName}
+                  Current:{' '}
+                  <a
+                    href={existingTransaction.w9FileUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    View file
+                  </a>
                 </span>
               )}
             </div>
@@ -444,9 +493,16 @@ export const AddTransactionForm = ({
                     className="wl-form-file"
                     onChange={handleChange}
                   />
-                  {isEditing && existingTransaction?.contractedServicesFileName && (
+                  {isEditing && existingTransaction?.contractedServicesFileUrl && (
                     <span className="wl-form-file-existing">
-                      Current: {existingTransaction.contractedServicesFileName}
+                      Current:{' '}
+                      <a
+                        href={existingTransaction.contractedServicesFileUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        View file
+                      </a>
                     </span>
                   )}
                 </div>
@@ -464,9 +520,16 @@ export const AddTransactionForm = ({
                     className="wl-form-file"
                     onChange={handleChange}
                   />
-                  {isEditing && existingTransaction?.conflictOfInterestFileName && (
+                  {isEditing && existingTransaction?.conflictOfInterestFileUrl && (
                     <span className="wl-form-file-existing">
-                      Current: {existingTransaction.conflictOfInterestFileName}
+                      Current:{' '}
+                      <a
+                        href={existingTransaction.conflictOfInterestFileUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        View file
+                      </a>
                     </span>
                   )}
                 </div>
@@ -490,9 +553,16 @@ export const AddTransactionForm = ({
                 className="wl-form-file"
                 onChange={handleChange}
               />
-              {isEditing && existingTransaction?.receiptFileName && (
+              {isEditing && existingTransaction?.receiptFileUrl && (
                 <span className="wl-form-file-existing">
-                  Current: {existingTransaction.receiptFileName}
+                  Current:{' '}
+                  <a
+                    href={existingTransaction.receiptFileUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    View file
+                  </a>
                 </span>
               )}
             </div>
