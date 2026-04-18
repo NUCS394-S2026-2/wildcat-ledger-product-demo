@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 
 import { useLedger } from '../hooks/useLedger';
 import { BudgetLine, Transaction, TransactionType } from '../types';
+import { parseReceipt } from '../utilities/parseReceipt';
 
 type SupportedType = Extract<
   TransactionType,
@@ -93,12 +94,35 @@ export const AddTransactionForm = ({
   });
 
   const [submitting, setSubmitting] = useState(false);
+  const [scanning, setScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [overdraftWarning, setOverdraftWarning] = useState<string | null>(null);
   const [pendingTransaction, setPendingTransaction] = useState<Omit<
     Transaction,
     'id'
   > | null>(null);
+
+  const handleReceiptChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    setForm((prev) => ({ ...prev, receiptFile: file }));
+    setError(null);
+    if (!file) return;
+
+    try {
+      setScanning(true);
+      const { title, amount } = await parseReceipt(file);
+      setForm((prev) => ({
+        ...prev,
+        title: title || prev.title,
+        amount: amount || prev.amount,
+      }));
+    } catch (err) {
+      // OCR failed — silently ignore, user can fill fields manually
+      console.warn('OCR failed:', err);
+    } finally {
+      setScanning(false);
+    }
+  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
@@ -361,6 +385,7 @@ export const AddTransactionForm = ({
           <div className="wl-form-group">
             <label className="wl-form-label" htmlFor="receiptFile">
               Receipt Photo {!isEditing && <span className="wl-form-required">*</span>}
+              {scanning && <span className="wl-ocr-scanning"> Scanning…</span>}
             </label>
             <input
               id="receiptFile"
@@ -368,7 +393,7 @@ export const AddTransactionForm = ({
               type="file"
               accept="image/*,application/pdf"
               className="wl-form-file"
-              onChange={handleChange}
+              onChange={handleReceiptChange}
             />
             {isEditing && existingTransaction?.receiptFileName && (
               <span className="wl-form-file-existing">
@@ -481,6 +506,7 @@ export const AddTransactionForm = ({
             <div className="wl-form-group">
               <label className="wl-form-label" htmlFor="receiptFile">
                 Receipt Photo {!isEditing && <span className="wl-form-required">*</span>}
+                {scanning && <span className="wl-ocr-scanning"> Scanning…</span>}
               </label>
               <input
                 id="receiptFile"
@@ -488,7 +514,7 @@ export const AddTransactionForm = ({
                 type="file"
                 accept="image/*,application/pdf"
                 className="wl-form-file"
-                onChange={handleChange}
+                onChange={handleReceiptChange}
               />
               {isEditing && existingTransaction?.receiptFileName && (
                 <span className="wl-form-file-existing">
