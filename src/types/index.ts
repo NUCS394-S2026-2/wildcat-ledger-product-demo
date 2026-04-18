@@ -23,12 +23,12 @@ export interface Transaction {
   zelleInfo?: string;
   // Direct payment
   isIndividualVendor?: boolean;
-  // Document filenames (stored when user attaches files)
-  receiptFileName?: string;
-  contractFileName?: string;
-  w9FileName?: string;
-  contractedServicesFileName?: string;
-  conflictOfInterestFileName?: string;
+  // Document URLs (Firebase Storage download URLs)
+  receiptFileUrl?: string;
+  contractFileUrl?: string;
+  w9FileUrl?: string;
+  contractedServicesFileUrl?: string;
+  conflictOfInterestFileUrl?: string;
 }
 
 export type AuditAction =
