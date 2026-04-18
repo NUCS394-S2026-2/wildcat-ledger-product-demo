@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 
+import { TopNav } from '../components/TopNav';
 import { useLedger } from '../hooks/useLedger';
 import { AuditEntry } from '../types';
 
@@ -108,7 +109,8 @@ export const AuditLogPage = () => {
 
   return (
     <div className="wl-app">
-      <div className="wl-main" style={{ paddingTop: 24 }}>
+      <TopNav />
+      <div className="wl-main" style={{ marginTop: 64, paddingTop: 24 }}>
         <button
           type="button"
           className="wl-btn-back"

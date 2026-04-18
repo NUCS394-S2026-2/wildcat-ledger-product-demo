@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 
+import { TopNav } from '../components/TopNav';
 import { useLedger } from '../hooks/useLedger';
 import { Organization } from '../types';
 
@@ -17,10 +18,10 @@ export const OrganizationsPage = () => {
   };
 
   return (
-    <div className="wl-register-root">
+    <div className="wl-register-root wl-topnav-offset">
+      <TopNav />
       <div className="wl-org-select-wrapper">
         <div className="wl-onboarding-header">
-          <h1 className="wl-register-title">WildcatLedger</h1>
           <p className="wl-onboarding-tagline">
             Track and manage your club&apos;s finances
           </p>

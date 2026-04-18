@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { TopNav } from '../components/TopNav';
 import { TransactionList } from '../components/TransactionList';
 import { TransactionModal } from '../components/TransactionModal';
 import { useLedger } from '../hooks/useLedger';
@@ -25,9 +26,16 @@ export const DashboardOptionB = () => {
     }
   }, [activeOrganization]);
 
+  useEffect(() => {
+    if (activeOrganization === null) {
+      navigate('/organizations', { replace: true });
+    }
+  }, [activeOrganization]);
+
   return (
     <div className="wl-app">
-      <div className="wl-header-optionB">
+      <TopNav />
+      <div className="wl-header-optionB" style={{ marginTop: 64 }}>
         <div className="wl-header-optionB-left">
           <h1 className="wl-header-title">{activeOrganization?.name}</h1>
         </div>
