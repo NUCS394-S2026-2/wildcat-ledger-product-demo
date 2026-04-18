@@ -37,15 +37,6 @@ export const DashboardOptionB = () => {
         <div className="wl-header-optionB-left">
           <h1 className="wl-header-title">{activeOrganization?.name}</h1>
         </div>
-        <div className="wl-header-optionB-right">
-          <button
-            type="button"
-            className="wl-btn-settings-header"
-            onClick={() => navigate('/settings')}
-          >
-            ⚙️
-          </button>
-        </div>
       </div>
 
       <div className="wl-dashboard-optionB">
