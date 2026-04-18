@@ -1268,6 +1268,74 @@ tbody tr:hover:not(.wl-row--flagged) {
   background: #fafafa;
 }
 
+.wl-row--pending {
+  background: #fffbeb;
+}
+
+.wl-row--pending:hover {
+  background: #fef3c7;
+}
+
+.wl-pending-type-badge {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #92400e;
+  margin-top: 2px;
+  letter-spacing: 0.01em;
+}
+
+.wl-pending-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 999px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+.wl-approve-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.wl-btn-approve {
+  background: var(--color-positive);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.wl-btn-approve:hover {
+  opacity: 0.85;
+}
+
+.wl-btn-reject {
+  background: none;
+  color: var(--color-negative);
+  border: 1.5px solid var(--color-negative);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.wl-btn-reject:hover {
+  background: var(--color-negative);
+  color: #fff;
+}
+
 tbody tr:last-child .wl-td {
   border-bottom: none;
 }

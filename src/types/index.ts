@@ -59,6 +59,18 @@ export interface OverallSummaryData {
 
 export type BudgetAllocations = Record<BudgetLine, number>;
 
+export interface PendingChange {
+  id: string;
+  type: 'edit' | 'delete';
+  transactionId: string;
+  transactionTitle: string;
+  requestedBy: string;
+  requestedByRole: 'treasurer' | 'president';
+  requestedAt: number;
+  before: Omit<Transaction, 'id'>;
+  after: Omit<Transaction, 'id'> | null;
+}
+
 export type UserRole = 'treasurer' | 'president' | 'officer';
 
 export interface Organization {
@@ -75,6 +87,7 @@ export interface Organization {
 
 export interface LedgerContextValue {
   auditLog: AuditEntry[];
+  pendingChanges: PendingChange[];
   organizations: Organization[];
   addOrganization: (name: string, budgetAllocations: BudgetAllocations) => Promise<void>;
   activeOrganizationId: string | null;
@@ -84,6 +97,8 @@ export interface LedgerContextValue {
   addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
   updateTransaction: (id: string, transaction: Omit<Transaction, 'id'>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
+  approvePendingChange: (pendingId: string) => Promise<void>;
+  rejectPendingChange: (pendingId: string) => Promise<void>;
   updateBudgetAllocations: (allocations: BudgetAllocations) => Promise<void>;
   initializeBudgetAllocations: (allocations: BudgetAllocations) => Promise<void>;
   selectedBudgetLine: BudgetLine | null;
