@@ -1953,8 +1953,11 @@ tbody tr:last-child .wl-td {
   padding: 20px;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 0;
+  height: 90vh;
+  overflow: hidden;
 }
 
 .wl-sidebar-header-optionB {
@@ -2163,6 +2166,9 @@ tbody tr:last-child .wl-td {
 
   .wl-sidebar-optionB {
     width: 100%;
+    height: auto;
+    position: static;
+    overflow: visible;
     border-right: none;
     border-bottom: 1px solid #e5e0f0;
     flex-direction: row;
