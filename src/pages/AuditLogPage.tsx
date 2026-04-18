@@ -11,7 +11,7 @@ const formatTimestamp = (ts: number) =>
     minute: '2-digit',
   });
 
-const actionLabel = (action: AuditEntry['action']) => {
+const actionLabel = (action: AuditEntry['action'], after: AuditEntry['after']) => {
   if (action === 'create')
     return {
       label: 'Created',
@@ -49,13 +49,13 @@ const actionLabel = (action: AuditEntry['action']) => {
     };
   if (action === 'approve')
     return {
-      label: 'Approved',
+      label: after === null ? 'Approved Delete' : 'Approved Edit',
       icon: '✓',
       className: 'wl-audit-badge--approve',
       entryClass: 'wl-audit-entry--approve',
     };
   return {
-    label: 'Rejected',
+    label: after === null ? 'Rejected Delete' : 'Rejected Edit',
     icon: '✕',
     className: 'wl-audit-badge--reject',
     entryClass: 'wl-audit-entry--reject',
@@ -130,7 +130,10 @@ export const AuditLogPage = () => {
         ) : (
           <div className="wl-audit-list">
             {auditLog.map((entry) => {
-              const { label, icon, className, entryClass } = actionLabel(entry.action);
+              const { label, icon, className, entryClass } = actionLabel(
+                entry.action,
+                entry.after,
+              );
               const changedKeys =
                 (entry.action === 'edit' ||
                   entry.action === 'request_edit' ||
