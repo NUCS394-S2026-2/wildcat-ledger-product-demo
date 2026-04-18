@@ -2325,23 +2325,3 @@ tbody tr:last-child .wl-td {
 .wl-topnav-offset {
   padding-top: 64px;
 }
-
-.wl-topnav-left {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-}
-
-.wl-topnav-back {
-  background: none;
-  border: none;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 0.78rem;
-  cursor: pointer;
-  padding: 0 8px;
-  transition: color 0.15s;
-}
-.wl-topnav-back:hover {
-  color: #fff;
-}
