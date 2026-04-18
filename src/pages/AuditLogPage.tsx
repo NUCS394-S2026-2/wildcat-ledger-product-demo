@@ -110,7 +110,7 @@ export const AuditLogPage = () => {
   return (
     <div className="wl-app">
       <TopNav />
-      <div className="wl-main" style={{ marginTop: 52, paddingTop: 24 }}>
+      <div className="wl-main" style={{ marginTop: 64, paddingTop: 24 }}>
         <button
           type="button"
           className="wl-btn-back"

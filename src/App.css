@@ -2275,7 +2275,7 @@ tbody tr:last-child .wl-td {
   top: 0;
   left: 0;
   right: 0;
-  height: 52px;
+  height: 64px;
   background: var(--color-primary);
   display: flex;
   align-items: center;
@@ -2315,5 +2315,25 @@ tbody tr:last-child .wl-td {
 
 /* Push page content below the fixed nav */
 .wl-topnav-offset {
-  padding-top: 52px;
+  padding-top: 64px;
+}
+
+.wl-topnav-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.wl-topnav-back {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.78rem;
+  cursor: pointer;
+  padding: 0 8px;
+  transition: color 0.15s;
+}
+.wl-topnav-back:hover {
+  color: #fff;
 }

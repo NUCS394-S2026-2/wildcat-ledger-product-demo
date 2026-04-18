@@ -35,7 +35,7 @@ export const DashboardOptionB = () => {
   return (
     <div className="wl-app">
       <TopNav />
-      <div className="wl-header-optionB" style={{ marginTop: 52 }}>
+      <div className="wl-header-optionB" style={{ marginTop: 64 }}>
         <div className="wl-header-optionB-left">
           <h1 className="wl-header-title">{activeOrganization?.name}</h1>
         </div>

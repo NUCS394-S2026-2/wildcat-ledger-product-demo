@@ -66,7 +66,7 @@ export const Settings = () => {
       <TopNav />
       <div
         className="wl-main"
-        style={{ marginTop: 52, paddingBottom: 0, paddingTop: 16 }}
+        style={{ marginTop: 64, paddingBottom: 0, paddingTop: 16 }}
       >
         <button
           type="button"
