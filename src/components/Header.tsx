@@ -7,7 +7,7 @@ interface HeaderProps {
 }
 
 export const Header = ({ onAddTransaction }: HeaderProps) => {
-  const { activeOrganization } = useLedger();
+  const { activeOrganization, userRole } = useLedger();
   const navigate = useNavigate();
 
   return (
@@ -19,9 +19,11 @@ export const Header = ({ onAddTransaction }: HeaderProps) => {
           </h1>
         </div>
         <div className="wl-header-right">
-          <button type="button" className="wl-btn-add" onClick={onAddTransaction}>
-            + Add Transaction
-          </button>
+          {userRole !== 'exec' && (
+            <button type="button" className="wl-btn-add" onClick={onAddTransaction}>
+              + Add Transaction
+            </button>
+          )}
           <button
             type="button"
             className="wl-btn-header-icon"

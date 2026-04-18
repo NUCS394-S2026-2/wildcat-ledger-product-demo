@@ -59,10 +59,15 @@ export interface OverallSummaryData {
 
 export type BudgetAllocations = Record<BudgetLine, number>;
 
+export type UserRole = 'treasurer' | 'president' | 'exec';
+
 export interface Organization {
   id: string;
   name: string;
   admins: string[];
+  treasurer?: string;
+  president?: string;
+  execs?: string[];
   budgetAllocations: BudgetAllocations;
   isBudgetLinesSet: boolean;
   transactions: Transaction[];
@@ -75,6 +80,7 @@ export interface LedgerContextValue {
   activeOrganizationId: string | null;
   setActiveOrganizationId: (id: string) => void;
   activeOrganization: Organization | null;
+  userRole: UserRole | null;
   addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
   updateTransaction: (id: string, transaction: Omit<Transaction, 'id'>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;

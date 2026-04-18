@@ -13,7 +13,8 @@ const EMPTY_ALLOCATIONS: BudgetAllocations = {
 };
 
 export const Settings = () => {
-  const { activeOrganization, updateBudgetAllocations } = useLedger();
+  const { activeOrganization, updateBudgetAllocations, userRole } = useLedger();
+  const canEdit = userRole !== 'exec';
   const navigate = useNavigate();
 
   const [allocations, setAllocations] = useState<BudgetAllocations>(
@@ -103,7 +104,9 @@ export const Settings = () => {
                 color: 'var(--color-text-muted)',
               }}
             >
-              Adjust your club&apos;s starting budget amounts for each line.
+              {canEdit
+                ? "Adjust your club's starting budget amounts for each line."
+                : 'You have read-only access to budget allocations.'}
             </p>
 
             <div className="wl-budget-allocation-form">
@@ -125,6 +128,7 @@ export const Settings = () => {
                       value={rawInputs[line] ?? allocations[line]}
                       placeholder="0.00"
                       onChange={(e) => setAllocation(line, e.target.value)}
+                      disabled={!canEdit}
                     />
                   </div>
                   <span className="wl-budget-allocation-preview">
@@ -155,32 +159,34 @@ export const Settings = () => {
               </div>
             )}
 
-            <div
-              style={{
-                display: 'flex',
-                gap: 12,
-                marginTop: 20,
-                paddingTop: 16,
-                borderTop: '1.5px solid var(--color-border)',
-              }}
-            >
-              <button
-                type="button"
-                className="wl-btn-primary"
-                onClick={handleSave}
-                disabled={submitting}
+            {canEdit && (
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 12,
+                  marginTop: 20,
+                  paddingTop: 16,
+                  borderTop: '1.5px solid var(--color-border)',
+                }}
               >
-                {submitting ? 'Saving…' : 'Save Changes'}
-              </button>
-              <button
-                type="button"
-                className="wl-btn-cancel"
-                onClick={handleReset}
-                disabled={submitting}
-              >
-                Reset to $0
-              </button>
-            </div>
+                <button
+                  type="button"
+                  className="wl-btn-primary"
+                  onClick={handleSave}
+                  disabled={submitting}
+                >
+                  {submitting ? 'Saving…' : 'Save Changes'}
+                </button>
+                <button
+                  type="button"
+                  className="wl-btn-cancel"
+                  onClick={handleReset}
+                  disabled={submitting}
+                >
+                  Reset to $0
+                </button>
+              </div>
+            )}
           </div>
         </section>
       </main>

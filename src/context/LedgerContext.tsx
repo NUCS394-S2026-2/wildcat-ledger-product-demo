@@ -21,6 +21,7 @@ import {
   LedgerContextValue,
   Organization,
   Transaction,
+  UserRole,
 } from '../types';
 import {
   applyFilters,
@@ -81,8 +82,15 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
         const orgs: Organization[] = await Promise.all(
           snapshot.docs
             .filter((doc) => {
-              const admins: string[] = doc.data().admins ?? [];
-              return admins.includes(userEmail);
+              const data = doc.data();
+              const admins: string[] = data.admins ?? [];
+              const execs: string[] = data.execs ?? [];
+              return (
+                admins.includes(userEmail) ||
+                data.treasurer === userEmail ||
+                data.president === userEmail ||
+                execs.includes(userEmail)
+              );
             })
             .map(async (doc) => {
               const data = doc.data();
@@ -97,6 +105,9 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
                 id: doc.id,
                 name: data.name as string,
                 admins: (data.admins ?? []) as string[],
+                treasurer: data.treasurer as string | undefined,
+                president: data.president as string | undefined,
+                execs: (data.execs ?? []) as string[],
                 budgetAllocations: data.budgetAllocations as BudgetAllocations,
                 isBudgetLinesSet: (data.isBudgetLinesSet as boolean) ?? false,
                 transactions,
@@ -268,6 +279,21 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
   const activeOrganization =
     organizations.find((o: Organization) => o.id === activeOrganizationId) ?? null;
 
+  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (u) => setCurrentUserEmail(u?.email ?? null));
+    return unsub;
+  }, []);
+
+  const userRole = ((): UserRole | null => {
+    if (!currentUserEmail || !activeOrganization) return null;
+    if (activeOrganization.treasurer === currentUserEmail) return 'treasurer';
+    if (activeOrganization.president === currentUserEmail) return 'president';
+    if (activeOrganization.execs?.includes(currentUserEmail)) return 'exec';
+    if (activeOrganization.admins?.includes(currentUserEmail)) return 'treasurer';
+    return null;
+  })();
+
   const transactions = activeOrganization?.transactions ?? [];
   const budgetAllocations = activeOrganization?.budgetAllocations ?? EMPTY_ALLOCATIONS;
 
@@ -293,6 +319,7 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     activeOrganizationId,
     setActiveOrganizationId,
     activeOrganization,
+    userRole,
     addTransaction,
     updateTransaction,
     deleteTransaction,

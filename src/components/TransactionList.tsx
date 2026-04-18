@@ -9,10 +9,12 @@ const TransactionRow = ({
   t,
   onEdit,
   onDelete,
+  canEdit,
 }: {
   t: Transaction;
   onEdit: (t: Transaction) => void;
   onDelete: (t: Transaction) => void;
+  canEdit: boolean;
 }) => {
   const isInflow = t.direction === 'Inflow';
 
@@ -31,30 +33,33 @@ const TransactionRow = ({
       <td className="wl-td wl-td-budget">
         <span className="wl-budget-chip">{t.budgetLine}</span>
       </td>
-      <td className="wl-td wl-td-actions">
-        <button
-          type="button"
-          className="wl-action-btn"
-          onClick={() => onEdit(t)}
-          aria-label="Edit transaction"
-        >
-          ✎
-        </button>
-        <button
-          type="button"
-          className="wl-action-btn wl-action-btn--delete"
-          onClick={() => onDelete(t)}
-          aria-label="Delete transaction"
-        >
-          ✕
-        </button>
-      </td>
+      {canEdit && (
+        <td className="wl-td wl-td-actions">
+          <button
+            type="button"
+            className="wl-action-btn"
+            onClick={() => onEdit(t)}
+            aria-label="Edit transaction"
+          >
+            ✎
+          </button>
+          <button
+            type="button"
+            className="wl-action-btn wl-action-btn--delete"
+            onClick={() => onDelete(t)}
+            aria-label="Delete transaction"
+          >
+            ✕
+          </button>
+        </td>
+      )}
     </tr>
   );
 };
 
 export const TransactionList = () => {
-  const { filteredTransactions, deleteTransaction } = useLedger();
+  const { filteredTransactions, deleteTransaction, userRole } = useLedger();
+  const canEdit = userRole !== 'exec';
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [deletingTransaction, setDeletingTransaction] = useState<Transaction | null>(
     null,
@@ -85,7 +90,7 @@ export const TransactionList = () => {
                 <th className="wl-th">Amount</th>
                 <th className="wl-th">Type</th>
                 <th className="wl-th">Budget Line</th>
-                <th className="wl-th">Actions</th>
+                {canEdit && <th className="wl-th">Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -95,6 +100,7 @@ export const TransactionList = () => {
                   t={t}
                   onEdit={setEditingTransaction}
                   onDelete={setDeletingTransaction}
+                  canEdit={canEdit}
                 />
               ))}
             </tbody>
