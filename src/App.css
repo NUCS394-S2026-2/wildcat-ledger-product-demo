@@ -1366,11 +1366,14 @@ tbody tr:last-child .wl-td {
 
 .wl-td-title {
   min-width: 160px;
+  max-width: 300px;
 }
 
 .wl-td-title-text {
   display: block;
   font-weight: 500;
+  word-break: break-word;
+  white-space: normal;
 }
 
 .wl-td-notes {
