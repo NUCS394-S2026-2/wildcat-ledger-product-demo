@@ -31,7 +31,14 @@ export interface Transaction {
   conflictOfInterestFileName?: string;
 }
 
-export type AuditAction = 'create' | 'edit' | 'delete';
+export type AuditAction =
+  | 'create'
+  | 'edit'
+  | 'delete'
+  | 'request_edit'
+  | 'request_delete'
+  | 'approve'
+  | 'reject';
 
 export interface AuditEntry {
   id: string;

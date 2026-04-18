@@ -1538,6 +1538,18 @@ tbody tr:last-child .wl-td {
   border-left-color: var(--color-negative);
 }
 
+.wl-audit-entry--request {
+  border-left-color: #f59e0b;
+}
+
+.wl-audit-entry--approve {
+  border-left-color: #10b981;
+}
+
+.wl-audit-entry--reject {
+  border-left-color: #ef4444;
+}
+
 .wl-audit-entry-header {
   display: flex;
   align-items: center;
@@ -1576,6 +1588,21 @@ tbody tr:last-child .wl-td {
 .wl-audit-badge--delete {
   background: var(--color-flag-bg);
   color: var(--color-flag-text);
+}
+
+.wl-audit-badge--request {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.wl-audit-badge--approve {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.wl-audit-badge--reject {
+  background: #fee2e2;
+  color: #991b1b;
 }
 
 .wl-audit-title {

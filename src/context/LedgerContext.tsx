@@ -263,6 +263,13 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
       before: toFirestore(omitId(old)),
       after: toFirestore(transaction),
     });
+    await writeAuditEntry(
+      'request_edit',
+      id,
+      transaction.title,
+      omitId(old),
+      transaction,
+    );
   };
 
   const deleteTransaction = async (id: string) => {
@@ -281,6 +288,7 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
       before: toFirestore(omitId(old)),
       after: null,
     });
+    await writeAuditEntry('request_delete', id, old.title, omitId(old), null);
   };
 
   const approvePendingChange = async (pendingId: string) => {
@@ -293,6 +301,13 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
       activeOrganizationId,
       'pendingChanges',
       pendingId,
+    );
+    await writeAuditEntry(
+      'approve',
+      pending.transactionId,
+      pending.transactionTitle,
+      pending.before,
+      pending.after,
     );
     if (pending.type === 'edit' && pending.after) {
       const txnRef = doc(
@@ -315,13 +330,6 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
         pending.after.direction,
         pending.after.amount,
       );
-      await writeAuditEntry(
-        'edit',
-        pending.transactionId,
-        pending.transactionTitle,
-        pending.before,
-        pending.after,
-      );
     } else if (pending.type === 'delete') {
       const txnRef = doc(
         db,
@@ -337,19 +345,13 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
         pending.before.direction,
         pending.before.amount,
       );
-      await writeAuditEntry(
-        'delete',
-        pending.transactionId,
-        pending.transactionTitle,
-        pending.before,
-        null,
-      );
     }
     await deleteDoc(pendingRef);
   };
 
   const rejectPendingChange = async (pendingId: string) => {
     if (!activeOrganizationId) return;
+    const pending = pendingChanges.find((p) => p.id === pendingId);
     const pendingRef = doc(
       db,
       'clubs',
@@ -358,6 +360,15 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
       pendingId,
     );
     await deleteDoc(pendingRef);
+    if (pending) {
+      await writeAuditEntry(
+        'reject',
+        pending.transactionId,
+        pending.transactionTitle,
+        pending.before,
+        pending.after,
+      );
+    }
   };
 
   const updateBudgetAllocations = async (allocations: BudgetAllocations) => {
