@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 import { auth } from '../config/firebase';
 import { useLedger } from '../hooks/useLedger';
@@ -142,47 +142,51 @@ export const TransactionList = () => {
             </thead>
             <tbody>
               {filteredTransactions.map((t) => (
-                <TransactionRow
-                  key={t.id}
-                  t={t}
-                  canEdit={canEdit}
-                  pending={pendingChanges.find((p) => p.transactionId === t.id)}
-                  onEdit={setEditingTransaction}
-                  onDelete={setDeletingTransaction}
-                  onApprove={approvePendingChange}
-                  onReject={rejectPendingChange}
-                />
+                <React.Fragment key={t.id}>
+                  <TransactionRow
+                    t={t}
+                    canEdit={canEdit}
+                    pending={pendingChanges.find((p) => p.transactionId === t.id)}
+                    onEdit={setEditingTransaction}
+                    onDelete={setDeletingTransaction}
+                    onApprove={approvePendingChange}
+                    onReject={rejectPendingChange}
+                  />
+                  {deletingTransaction?.id === t.id && (
+                    <tr className="wl-delete-confirm-row">
+                      <td colSpan={canEdit ? 5 : 4} className="wl-delete-confirm-cell">
+                        <div className="wl-inline-confirm wl-inline-confirm--inline">
+                          <p>
+                            Submit a delete request for <strong>{t.title}</strong>? The
+                            other approver will need to confirm before it is removed.
+                          </p>
+                          <div className="wl-overdraft-actions">
+                            <button
+                              type="button"
+                              className="wl-btn-warning"
+                              style={{ background: '#dc2626' }}
+                              onClick={handleDeleteConfirm}
+                            >
+                              Submit Request
+                            </button>
+                            <button
+                              type="button"
+                              className="wl-btn-cancel"
+                              onClick={() => setDeletingTransaction(null)}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               ))}
             </tbody>
           </table>
         </div>
       </div>
-
-      {deletingTransaction && (
-        <div className="wl-inline-confirm">
-          <p>
-            Submit a delete request for <strong>{deletingTransaction.title}</strong>? The
-            other approver will need to confirm before it is removed.
-          </p>
-          <div className="wl-overdraft-actions">
-            <button
-              type="button"
-              className="wl-btn-warning"
-              style={{ background: '#dc2626' }}
-              onClick={handleDeleteConfirm}
-            >
-              Submit Request
-            </button>
-            <button
-              type="button"
-              className="wl-btn-cancel"
-              onClick={() => setDeletingTransaction(null)}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
 
       <TransactionModal
         isOpen={!!editingTransaction}

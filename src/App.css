@@ -1450,6 +1450,33 @@ tbody tr:last-child .wl-td {
   margin: 0 0 10px;
 }
 
+@keyframes wl-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.wl-delete-confirm-row td {
+  padding: 0 !important;
+  border-top: none !important;
+}
+
+.wl-delete-confirm-cell {
+  padding: 0 !important;
+}
+
+.wl-inline-confirm--inline {
+  margin: 0;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  border-top: none;
+  animation: wl-slide-down 0.2s ease-out forwards;
+}
+
 /* ─── Status badges ──────────────────────────────────────────────── */
 .wl-badge {
   display: inline-block;
