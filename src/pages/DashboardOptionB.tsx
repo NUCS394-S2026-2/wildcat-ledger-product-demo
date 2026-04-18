@@ -15,7 +15,9 @@ export const DashboardOptionB = () => {
     selectedBudgetLine,
     setSelectedBudgetLine,
     activeOrganization,
+    userRole,
   } = useLedger();
+  const canEdit = userRole === 'treasurer' || userRole === 'president';
 
   useEffect(() => {
     if (activeOrganization === null) {
@@ -85,13 +87,15 @@ export const DashboardOptionB = () => {
             >
               Audit History
             </button>
-            <button
-              type="button"
-              className="wl-sidebar-add-btn"
-              onClick={() => setModalOpen(true)}
-            >
-              + Add Transaction
-            </button>
+            {canEdit && (
+              <button
+                type="button"
+                className="wl-sidebar-add-btn"
+                onClick={() => setModalOpen(true)}
+              >
+                + Add Transaction
+              </button>
+            )}
           </div>
         </aside>
 

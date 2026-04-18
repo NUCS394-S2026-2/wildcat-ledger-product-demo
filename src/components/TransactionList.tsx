@@ -1,25 +1,42 @@
 import { useState } from 'react';
 
+import { auth } from '../config/firebase';
 import { useLedger } from '../hooks/useLedger';
-import { Transaction } from '../types';
+import { PendingChange, Transaction } from '../types';
 import { formatCurrency } from '../utilities/calculations';
 import { TransactionModal } from './TransactionModal';
 
 const TransactionRow = ({
   t,
+  canEdit,
+  pending,
   onEdit,
   onDelete,
+  onApprove,
+  onReject,
 }: {
   t: Transaction;
+  canEdit: boolean;
+  pending: PendingChange | undefined;
   onEdit: (t: Transaction) => void;
   onDelete: (t: Transaction) => void;
+  onApprove: (pendingId: string) => void;
+  onReject: (pendingId: string) => void;
 }) => {
   const isInflow = t.direction === 'Inflow';
+  const currentEmail = auth.currentUser?.email;
+  const isMyPending = !!pending && pending.requestedBy === currentEmail;
+  const canApprove = !!pending && !isMyPending && canEdit;
 
   return (
-    <tr>
+    <tr className={pending ? 'wl-row--pending' : ''}>
       <td className="wl-td wl-td-title">
         <span className="wl-td-title-text">{t.title}</span>
+        {pending && (
+          <span className="wl-pending-type-badge">
+            {pending.type === 'delete' ? 'Delete requested' : 'Edit requested'}
+          </span>
+        )}
       </td>
       <td
         className={`wl-td wl-td-amount ${isInflow ? 'wl-amount-positive' : 'wl-amount-negative'}`}
@@ -31,30 +48,65 @@ const TransactionRow = ({
       <td className="wl-td wl-td-budget">
         <span className="wl-budget-chip">{t.budgetLine}</span>
       </td>
-      <td className="wl-td wl-td-actions">
-        <button
-          type="button"
-          className="wl-action-btn"
-          onClick={() => onEdit(t)}
-          aria-label="Edit transaction"
-        >
-          ✎
-        </button>
-        <button
-          type="button"
-          className="wl-action-btn wl-action-btn--delete"
-          onClick={() => onDelete(t)}
-          aria-label="Delete transaction"
-        >
-          ✕
-        </button>
-      </td>
+      {canEdit && (
+        <td className="wl-td wl-td-actions">
+          {pending ? (
+            isMyPending ? (
+              <span className="wl-pending-badge">Awaiting Approval</span>
+            ) : canApprove ? (
+              <div className="wl-approve-actions">
+                <button
+                  type="button"
+                  className="wl-btn-approve"
+                  onClick={() => onApprove(pending.id)}
+                >
+                  Approve
+                </button>
+                <button
+                  type="button"
+                  className="wl-btn-reject"
+                  onClick={() => onReject(pending.id)}
+                >
+                  Reject
+                </button>
+              </div>
+            ) : null
+          ) : (
+            <>
+              <button
+                type="button"
+                className="wl-action-btn"
+                onClick={() => onEdit(t)}
+                aria-label="Edit transaction"
+              >
+                ✎
+              </button>
+              <button
+                type="button"
+                className="wl-action-btn wl-action-btn--delete"
+                onClick={() => onDelete(t)}
+                aria-label="Delete transaction"
+              >
+                ✕
+              </button>
+            </>
+          )}
+        </td>
+      )}
     </tr>
   );
 };
 
 export const TransactionList = () => {
-  const { filteredTransactions, deleteTransaction } = useLedger();
+  const {
+    filteredTransactions,
+    deleteTransaction,
+    userRole,
+    pendingChanges,
+    approvePendingChange,
+    rejectPendingChange,
+  } = useLedger();
+  const canEdit = userRole === 'treasurer' || userRole === 'president';
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [deletingTransaction, setDeletingTransaction] = useState<Transaction | null>(
     null,
@@ -85,7 +137,7 @@ export const TransactionList = () => {
                 <th className="wl-th">Amount</th>
                 <th className="wl-th">Type</th>
                 <th className="wl-th">Budget Line</th>
-                <th className="wl-th">Actions</th>
+                {canEdit && <th className="wl-th">Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -93,8 +145,12 @@ export const TransactionList = () => {
                 <TransactionRow
                   key={t.id}
                   t={t}
+                  canEdit={canEdit}
+                  pending={pendingChanges.find((p) => p.transactionId === t.id)}
                   onEdit={setEditingTransaction}
                   onDelete={setDeletingTransaction}
+                  onApprove={approvePendingChange}
+                  onReject={rejectPendingChange}
                 />
               ))}
             </tbody>
@@ -105,7 +161,8 @@ export const TransactionList = () => {
       {deletingTransaction && (
         <div className="wl-inline-confirm">
           <p>
-            Delete <strong>{deletingTransaction.title}</strong>? This cannot be undone.
+            Submit a delete request for <strong>{deletingTransaction.title}</strong>? The
+            other approver will need to confirm before it is removed.
           </p>
           <div className="wl-overdraft-actions">
             <button
@@ -114,7 +171,7 @@ export const TransactionList = () => {
               style={{ background: '#dc2626' }}
               onClick={handleDeleteConfirm}
             >
-              Delete
+              Submit Request
             </button>
             <button
               type="button"

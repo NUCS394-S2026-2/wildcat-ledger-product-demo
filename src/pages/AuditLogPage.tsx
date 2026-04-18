@@ -27,11 +27,39 @@ const actionLabel = (action: AuditEntry['action']) => {
       className: 'wl-audit-badge--edit',
       entryClass: 'wl-audit-entry--edit',
     };
+  if (action === 'delete')
+    return {
+      label: 'Deleted',
+      icon: '×',
+      className: 'wl-audit-badge--delete',
+      entryClass: 'wl-audit-entry--delete',
+    };
+  if (action === 'request_edit')
+    return {
+      label: 'Edit Requested',
+      icon: '?',
+      className: 'wl-audit-badge--request',
+      entryClass: 'wl-audit-entry--request',
+    };
+  if (action === 'request_delete')
+    return {
+      label: 'Delete Requested',
+      icon: '?',
+      className: 'wl-audit-badge--request',
+      entryClass: 'wl-audit-entry--request',
+    };
+  if (action === 'approve')
+    return {
+      label: 'Approved',
+      icon: '✓',
+      className: 'wl-audit-badge--approve',
+      entryClass: 'wl-audit-entry--approve',
+    };
   return {
-    label: 'Deleted',
-    icon: '×',
-    className: 'wl-audit-badge--delete',
-    entryClass: 'wl-audit-entry--delete',
+    label: 'Rejected',
+    icon: '✕',
+    className: 'wl-audit-badge--reject',
+    entryClass: 'wl-audit-entry--reject',
   };
 };
 
@@ -112,7 +140,11 @@ export const AuditLogPage = () => {
             {auditLog.map((entry) => {
               const { label, icon, className, entryClass } = actionLabel(entry.action);
               const changedKeys =
-                entry.action === 'edit' && entry.before && entry.after
+                (entry.action === 'edit' ||
+                  entry.action === 'request_edit' ||
+                  entry.action === 'approve') &&
+                entry.before &&
+                entry.after
                   ? Object.keys(entry.after).filter(
                       (k) =>
                         (entry.before as Record<string, unknown>)[k] !==

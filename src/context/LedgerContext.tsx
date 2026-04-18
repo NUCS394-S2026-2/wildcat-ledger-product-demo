@@ -20,7 +20,9 @@ import {
   BudgetLine,
   LedgerContextValue,
   Organization,
+  PendingChange,
   Transaction,
+  UserRole,
 } from '../types';
 import {
   applyFilters,
@@ -40,6 +42,7 @@ const EMPTY_ALLOCATIONS: BudgetAllocations = {
 export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [auditLog, setAuditLog] = useState<AuditEntry[]>([]);
+  const [pendingChanges, setPendingChanges] = useState<PendingChange[]>([]);
   const [activeOrganizationId, setActiveOrganizationIdState] = useState<string | null>(
     () => localStorage.getItem('activeOrganizationId'),
   );
@@ -81,8 +84,17 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
         const orgs: Organization[] = await Promise.all(
           snapshot.docs
             .filter((doc) => {
-              const admins: string[] = doc.data().admins ?? [];
-              return admins.includes(userEmail);
+              const data = doc.data();
+              const admins: string[] = data.admins ?? [];
+              const officers: string[] = data.officers ?? [];
+              const treasurers: string[] = data.treasurers ?? [];
+              const presidents: string[] = data.presidents ?? [];
+              return (
+                admins.includes(userEmail) ||
+                treasurers.includes(userEmail) ||
+                presidents.includes(userEmail) ||
+                officers.includes(userEmail)
+              );
             })
             .map(async (doc) => {
               const data = doc.data();
@@ -97,6 +109,9 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
                 id: doc.id,
                 name: data.name as string,
                 admins: (data.admins ?? []) as string[],
+                treasurer: (data.treasurers ?? []) as string[],
+                president: (data.presidents ?? []) as string[],
+                officers: (data.officers ?? []) as string[],
                 budgetAllocations: data.budgetAllocations as BudgetAllocations,
                 isBudgetLinesSet: (data.isBudgetLinesSet as boolean) ?? false,
                 transactions,
@@ -136,9 +151,18 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
       setAuditLog(entries);
     });
 
+    const pendingRef = collection(db, 'clubs', activeOrganizationId, 'pendingChanges');
+    const unsubPending = onSnapshot(pendingRef, (snapshot) => {
+      const changes: PendingChange[] = snapshot.docs
+        .map((doc) => ({ id: doc.id, ...(doc.data() as Omit<PendingChange, 'id'>) }))
+        .sort((a, b) => b.requestedAt - a.requestedAt);
+      setPendingChanges(changes);
+    });
+
     return () => {
       unsubTxns();
       unsubAudit();
+      unsubPending();
     };
   }, [activeOrganizationId]);
 
@@ -225,30 +249,126 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
 
   const updateTransaction = async (id: string, transaction: Omit<Transaction, 'id'>) => {
     if (!activeOrganizationId) return;
+    const role = userRole;
+    if (role !== 'treasurer' && role !== 'president') return;
     const old = activeOrganization?.transactions.find((t) => t.id === id);
-    const txnRef = doc(db, 'clubs', activeOrganizationId, 'transactions', id);
-    await updateDoc(txnRef, toFirestore(transaction));
-    if (old)
-      await reverseDelta(activeOrganizationId, old.budgetLine, old.direction, old.amount);
-    await applyDelta(
-      activeOrganizationId,
-      transaction.budgetLine,
-      transaction.direction,
-      transaction.amount,
+    if (!old) return;
+    await addDoc(collection(db, 'clubs', activeOrganizationId, 'pendingChanges'), {
+      type: 'edit',
+      transactionId: id,
+      transactionTitle: transaction.title,
+      requestedBy: auth.currentUser?.email ?? 'unknown',
+      requestedByRole: role,
+      requestedAt: Date.now(),
+      before: toFirestore(omitId(old)),
+      after: toFirestore(transaction),
+    });
+    await writeAuditEntry(
+      'request_edit',
+      id,
+      transaction.title,
+      omitId(old),
+      transaction,
     );
-    const oldWithoutId = old ? omitId(old) : null;
-    await writeAuditEntry('edit', id, transaction.title, oldWithoutId, transaction);
   };
 
   const deleteTransaction = async (id: string) => {
     if (!activeOrganizationId) return;
+    const role = userRole;
+    if (role !== 'treasurer' && role !== 'president') return;
     const old = activeOrganization?.transactions.find((t) => t.id === id);
-    const txnRef = doc(db, 'clubs', activeOrganizationId, 'transactions', id);
-    await deleteDoc(txnRef);
-    if (old)
-      await reverseDelta(activeOrganizationId, old.budgetLine, old.direction, old.amount);
-    const oldWithoutId = old ? omitId(old) : null;
-    await writeAuditEntry('delete', id, old?.title ?? '', oldWithoutId, null);
+    if (!old) return;
+    await addDoc(collection(db, 'clubs', activeOrganizationId, 'pendingChanges'), {
+      type: 'delete',
+      transactionId: id,
+      transactionTitle: old.title,
+      requestedBy: auth.currentUser?.email ?? 'unknown',
+      requestedByRole: role,
+      requestedAt: Date.now(),
+      before: toFirestore(omitId(old)),
+      after: null,
+    });
+    await writeAuditEntry('request_delete', id, old.title, omitId(old), null);
+  };
+
+  const approvePendingChange = async (pendingId: string) => {
+    if (!activeOrganizationId) return;
+    const pending = pendingChanges.find((p) => p.id === pendingId);
+    if (!pending) return;
+    const pendingRef = doc(
+      db,
+      'clubs',
+      activeOrganizationId,
+      'pendingChanges',
+      pendingId,
+    );
+    await writeAuditEntry(
+      'approve',
+      pending.transactionId,
+      pending.transactionTitle,
+      pending.before,
+      pending.after,
+    );
+    if (pending.type === 'edit' && pending.after) {
+      const txnRef = doc(
+        db,
+        'clubs',
+        activeOrganizationId,
+        'transactions',
+        pending.transactionId,
+      );
+      await updateDoc(txnRef, toFirestore(pending.after));
+      await reverseDelta(
+        activeOrganizationId,
+        pending.before.budgetLine,
+        pending.before.direction,
+        pending.before.amount,
+      );
+      await applyDelta(
+        activeOrganizationId,
+        pending.after.budgetLine,
+        pending.after.direction,
+        pending.after.amount,
+      );
+    } else if (pending.type === 'delete') {
+      const txnRef = doc(
+        db,
+        'clubs',
+        activeOrganizationId,
+        'transactions',
+        pending.transactionId,
+      );
+      await deleteDoc(txnRef);
+      await reverseDelta(
+        activeOrganizationId,
+        pending.before.budgetLine,
+        pending.before.direction,
+        pending.before.amount,
+      );
+    }
+    await deleteDoc(pendingRef);
+  };
+
+  const rejectPendingChange = async (pendingId: string) => {
+    if (!activeOrganizationId) return;
+    const pending = pendingChanges.find((p) => p.id === pendingId);
+    const pendingRef = doc(
+      db,
+      'clubs',
+      activeOrganizationId,
+      'pendingChanges',
+      pendingId,
+    );
+    await deleteDoc(pendingRef);
+    if (pending) {
+      await writeAuditEntry(
+        'reject',
+        pending.transactionId,
+        pending.transactionTitle,
+        pending.before,
+        pending.after,
+      );
+    }
   };
 
   const updateBudgetAllocations = async (allocations: BudgetAllocations) => {
@@ -267,6 +387,16 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
 
   const activeOrganization =
     organizations.find((o: Organization) => o.id === activeOrganizationId) ?? null;
+
+  const userRole = ((): UserRole | null => {
+    const email = auth.currentUser?.email;
+    if (!email || !activeOrganization) return null;
+    if (activeOrganization.treasurer?.includes(email)) return 'treasurer';
+    if (activeOrganization.president?.includes(email)) return 'president';
+    if (activeOrganization.officers?.includes(email)) return 'officer';
+    if (activeOrganization.admins?.includes(email)) return 'treasurer';
+    return null;
+  })();
 
   const transactions = activeOrganization?.transactions ?? [];
   const budgetAllocations = activeOrganization?.budgetAllocations ?? EMPTY_ALLOCATIONS;
@@ -288,14 +418,18 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
 
   const value: LedgerContextValue = {
     auditLog,
+    pendingChanges,
     organizations,
     addOrganization,
     activeOrganizationId,
     setActiveOrganizationId,
     activeOrganization,
+    userRole,
     addTransaction,
     updateTransaction,
     deleteTransaction,
+    approvePendingChange,
+    rejectPendingChange,
     updateBudgetAllocations,
     initializeBudgetAllocations,
     selectedBudgetLine,
