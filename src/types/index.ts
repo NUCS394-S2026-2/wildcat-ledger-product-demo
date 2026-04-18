@@ -59,15 +59,15 @@ export interface OverallSummaryData {
 
 export type BudgetAllocations = Record<BudgetLine, number>;
 
-export type UserRole = 'treasurer' | 'president' | 'exec';
+export type UserRole = 'treasurer' | 'president' | 'officer';
 
 export interface Organization {
   id: string;
   name: string;
   admins: string[];
-  treasurer?: string;
-  president?: string;
-  execs?: string[];
+  treasurer?: string[];
+  president?: string[];
+  officers?: string[];
   budgetAllocations: BudgetAllocations;
   isBudgetLinesSet: boolean;
   transactions: Transaction[];

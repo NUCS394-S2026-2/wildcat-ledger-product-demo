@@ -11,7 +11,7 @@ export const useRole = (): UserRole | null => {
   const email = user.email;
   if (activeOrganization.treasurer === email) return 'treasurer';
   if (activeOrganization.president === email) return 'president';
-  if (activeOrganization.execs?.includes(email)) return 'exec';
+  if (activeOrganization.officers?.includes(email)) return 'officer';
 
   // Backwards compat: existing orgs only have admins[] — treat them as treasurer
   if (activeOrganization.admins?.includes(email)) return 'treasurer';

@@ -19,7 +19,7 @@ export const Header = ({ onAddTransaction }: HeaderProps) => {
           </h1>
         </div>
         <div className="wl-header-right">
-          {userRole !== 'exec' && (
+          {(userRole === 'treasurer' || userRole === 'president') && (
             <button type="button" className="wl-btn-add" onClick={onAddTransaction}>
               + Add Transaction
             </button>

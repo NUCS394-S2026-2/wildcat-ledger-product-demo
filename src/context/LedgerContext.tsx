@@ -84,12 +84,14 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
             .filter((doc) => {
               const data = doc.data();
               const admins: string[] = data.admins ?? [];
-              const execs: string[] = data.execs ?? [];
+              const officers: string[] = data.officers ?? [];
+              const treasurers: string[] = data.treasurers ?? [];
+              const presidents: string[] = data.presidents ?? [];
               return (
                 admins.includes(userEmail) ||
-                data.treasurer === userEmail ||
-                data.president === userEmail ||
-                execs.includes(userEmail)
+                treasurers.includes(userEmail) ||
+                presidents.includes(userEmail) ||
+                officers.includes(userEmail)
               );
             })
             .map(async (doc) => {
@@ -105,9 +107,9 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
                 id: doc.id,
                 name: data.name as string,
                 admins: (data.admins ?? []) as string[],
-                treasurer: data.treasurer as string | undefined,
-                president: data.president as string | undefined,
-                execs: (data.execs ?? []) as string[],
+                treasurer: (data.treasurers ?? []) as string[],
+                president: (data.presidents ?? []) as string[],
+                officers: (data.officers ?? []) as string[],
                 budgetAllocations: data.budgetAllocations as BudgetAllocations,
                 isBudgetLinesSet: (data.isBudgetLinesSet as boolean) ?? false,
                 transactions,
@@ -279,18 +281,13 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
   const activeOrganization =
     organizations.find((o: Organization) => o.id === activeOrganizationId) ?? null;
 
-  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => setCurrentUserEmail(u?.email ?? null));
-    return unsub;
-  }, []);
-
   const userRole = ((): UserRole | null => {
-    if (!currentUserEmail || !activeOrganization) return null;
-    if (activeOrganization.treasurer === currentUserEmail) return 'treasurer';
-    if (activeOrganization.president === currentUserEmail) return 'president';
-    if (activeOrganization.execs?.includes(currentUserEmail)) return 'exec';
-    if (activeOrganization.admins?.includes(currentUserEmail)) return 'treasurer';
+    const email = auth.currentUser?.email;
+    if (!email || !activeOrganization) return null;
+    if (activeOrganization.treasurer?.includes(email)) return 'treasurer';
+    if (activeOrganization.president?.includes(email)) return 'president';
+    if (activeOrganization.officers?.includes(email)) return 'officer';
+    if (activeOrganization.admins?.includes(email)) return 'treasurer';
     return null;
   })();
 

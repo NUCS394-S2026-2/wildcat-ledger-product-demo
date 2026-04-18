@@ -59,7 +59,7 @@ const TransactionRow = ({
 
 export const TransactionList = () => {
   const { filteredTransactions, deleteTransaction, userRole } = useLedger();
-  const canEdit = userRole !== 'exec';
+  const canEdit = userRole === 'treasurer' || userRole === 'president';
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [deletingTransaction, setDeletingTransaction] = useState<Transaction | null>(
     null,

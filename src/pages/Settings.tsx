@@ -14,7 +14,7 @@ const EMPTY_ALLOCATIONS: BudgetAllocations = {
 
 export const Settings = () => {
   const { activeOrganization, updateBudgetAllocations, userRole } = useLedger();
-  const canEdit = userRole !== 'exec';
+  const canEdit = userRole === 'treasurer' || userRole === 'president';
   const navigate = useNavigate();
 
   const [allocations, setAllocations] = useState<BudgetAllocations>(
