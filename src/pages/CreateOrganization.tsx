@@ -170,6 +170,7 @@ export const CreateOrganization = () => {
                     className="wl-form-input wl-budget-allocation-input"
                     value={allocations[line] === 0 ? '' : String(allocations[line])}
                     placeholder="0.00"
+                    disabled={scanState === 'done'}
                     onChange={(e) => updateLine(line, e.target.value)}
                   />
                 </div>

@@ -25,16 +25,21 @@ function fileToBase64(file: File): Promise<string> {
  * the label and value are on separate lines).
  */
 function findAmountNear(lines: string[], keyword: RegExp): number {
-  // Matches things like: $1,234.56  |  1234.56  |  1,234  |  (1,234.56)
-  const dollarPattern = /\(?\$?\s*([\d,]+(?:\.\d{1,2})?)\)?/g;
+  // Only match values that look like actual dollar amounts — must have one of:
+  //   - a $ prefix                     → $1234  $1,234.56
+  //   - comma thousands separator      → 1,234  1,234.56
+  //   - exactly two decimal places     → 706.74
+  // Plain integers like "2024" (years) are intentionally excluded.
+  const dollarPattern =
+    /\$\s*([\d,]+(?:\.\d{1,2})?)|\b(\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d+\.\d{2})\b/g;
 
   const parseMatch = (str: string): number => {
     const matches = [...str.matchAll(dollarPattern)];
     if (!matches.length) return 0;
-    // Return the largest number found (avoids picking up tiny reference numbers)
-    return Math.max(
-      ...matches.map((m) => parseFloat(m[1].replace(/,/g, ''))).filter((n) => !isNaN(n)),
-    );
+    const values = matches
+      .map((m) => parseFloat((m[1] ?? m[2]).replace(/,/g, '')))
+      .filter((n) => !isNaN(n) && n > 0);
+    return values.length ? Math.max(...values) : 0;
   };
 
   for (let i = 0; i < lines.length; i++) {
