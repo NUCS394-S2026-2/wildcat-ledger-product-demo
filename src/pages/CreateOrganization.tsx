@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { TopNav } from '../components/TopNav';
 import { useLedger } from '../hooks/useLedger';
 import { BudgetAllocations } from '../types';
 import { formatCurrency } from '../utilities/calculations';
@@ -86,12 +87,12 @@ export const CreateOrganization = () => {
   const editableLines = ['ASG', 'Operating', 'Gifts'] as const;
 
   return (
-    <div className="wl-register-root">
+    <div className="wl-register-root wl-topnav-offset">
+      <TopNav />
       <div className="wl-register-card">
-        <h1 className="wl-register-title">WildcatLedger</h1>
+        <h1 className="wl-register-title">{activeOrganization.name}</h1>
         <p className="wl-register-subtitle">
-          Upload your budget allocation document for{' '}
-          <strong>{activeOrganization.name}</strong>.
+          Upload your budget allocation document to get started.
         </p>
 
         {/* ── Upload area ── */}

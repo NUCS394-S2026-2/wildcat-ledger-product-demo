@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { TopNav } from '../components/TopNav';
 import { useLedger } from '../hooks/useLedger';
 import { BudgetAllocations } from '../types';
 import { BUDGET_LINES, formatCurrency } from '../utilities/calculations';
@@ -62,7 +63,11 @@ export const Settings = () => {
 
   return (
     <div className="wl-app">
-      <div className="wl-main" style={{ paddingBottom: 0, paddingTop: 16 }}>
+      <TopNav />
+      <div
+        className="wl-main"
+        style={{ marginTop: 52, paddingBottom: 0, paddingTop: 16 }}
+      >
         <button
           type="button"
           className="wl-btn-back"
