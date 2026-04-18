@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { TopNav } from '../components/TopNav';
 import { TransactionList } from '../components/TransactionList';
 import { TransactionModal } from '../components/TransactionModal';
 import { useLedger } from '../hooks/useLedger';
@@ -34,8 +33,7 @@ export const DashboardOptionB = () => {
 
   return (
     <div className="wl-app">
-      <TopNav />
-      <div className="wl-header-optionB" style={{ marginTop: 64 }}>
+      <div className="wl-header-optionB">
         <div className="wl-header-optionB-left">
           <h1 className="wl-header-title">{activeOrganization?.name}</h1>
         </div>
@@ -62,7 +60,6 @@ export const DashboardOptionB = () => {
               ← Back
             </button>
           </div>
-
           <div className="wl-sidebar-section-optionB">
             <h3 className="wl-sidebar-title-optionB">Filter</h3>
             <button

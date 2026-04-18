@@ -7,25 +7,15 @@ export const TopNav = () => {
 
   return (
     <nav className="wl-topnav">
-      <div className="wl-topnav-left">
-        <button
-          type="button"
-          className="wl-topnav-logo"
-          onClick={() => navigate('/organizations')}
-          aria-label="Go to home"
-        >
-          <img src={logo} alt="WildcatLedger" className="wl-topnav-logo-img" />
-          <span className="wl-topnav-logo-text">WildcatLedger</span>
-        </button>
-        <button
-          type="button"
-          className="wl-topnav-back"
-          onClick={() => navigate(-1)}
-          aria-label="Go back"
-        >
-          ← Back
-        </button>
-      </div>
+      <button
+        type="button"
+        className="wl-topnav-logo"
+        onClick={() => navigate('/organizations')}
+        aria-label="Go to home"
+      >
+        <img src={logo} alt="WildcatLedger" className="wl-topnav-logo-img" />
+        <span className="wl-topnav-logo-text">WildcatLedger</span>
+      </button>
     </nav>
   );
 };
