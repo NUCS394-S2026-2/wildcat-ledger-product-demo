@@ -64,19 +64,7 @@ export const Settings = () => {
   return (
     <div className="wl-app">
       <TopNav />
-      <div
-        className="wl-main"
-        style={{ marginTop: 64, paddingBottom: 0, paddingTop: 16 }}
-      >
-        <button
-          type="button"
-          className="wl-btn-back"
-          onClick={() => navigate('/dashboard')}
-        >
-          ← Back to Dashboard
-        </button>
-      </div>
-      <main className="wl-main">
+      <main className="wl-main" style={{ marginTop: 64 }}>
         <section>
           <h1
             className="wl-section-title"
