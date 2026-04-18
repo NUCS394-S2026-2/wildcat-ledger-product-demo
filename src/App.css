@@ -2253,6 +2253,14 @@ tbody tr:last-child .wl-td {
   border-radius: 8px;
   object-fit: contain;
 }
+.wl-budget-upload-filename {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-primary, #4c1d95);
+  word-break: break-all;
+  text-align: center;
+  max-width: 90%;
+}
 .wl-budget-scan-label {
   font-size: 0.88rem;
   font-weight: 600;

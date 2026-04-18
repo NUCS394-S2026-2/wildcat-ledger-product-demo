@@ -25,6 +25,8 @@ export const CreateOrganization = () => {
   const [scanState, setScanState] = useState<ScanState>('idle');
   const [scanError, setScanError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const [isPdf, setIsPdf] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -43,7 +45,11 @@ export const CreateOrganization = () => {
     if (!file) return;
 
     // Show preview
-    setPreviewUrl(URL.createObjectURL(file));
+    const pdf =
+      file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    setIsPdf(pdf);
+    setUploadedFileName(file.name);
+    setPreviewUrl(pdf ? null : URL.createObjectURL(file));
     setScanState('scanning');
     setScanError(null);
     setError(null);
@@ -111,26 +117,27 @@ export const CreateOrganization = () => {
             onChange={handleFileChange}
           />
 
-          {previewUrl && scanState !== 'scanning' ? (
+          {scanState === 'scanning' ? (
+            <div className="wl-budget-upload-placeholder">
+              <span className="wl-budget-upload-icon">⏳</span>
+              <span className="wl-ocr-scanning">Scanning document…</span>
+            </div>
+          ) : previewUrl && !isPdf ? (
             <img
               src={previewUrl}
               alt="Budget document"
               className="wl-budget-upload-preview"
             />
+          ) : isPdf && uploadedFileName && scanState !== 'idle' ? (
+            <div className="wl-budget-upload-placeholder">
+              <span className="wl-budget-upload-icon">📑</span>
+              <span className="wl-budget-upload-filename">{uploadedFileName}</span>
+            </div>
           ) : (
             <div className="wl-budget-upload-placeholder">
-              {scanState === 'scanning' ? (
-                <>
-                  <span className="wl-budget-upload-icon">⏳</span>
-                  <span className="wl-ocr-scanning">Scanning document…</span>
-                </>
-              ) : (
-                <>
-                  <span className="wl-budget-upload-icon">📄</span>
-                  <span>Click to upload budget document</span>
-                  <span className="wl-budget-upload-hint">Image or PDF</span>
-                </>
-              )}
+              <span className="wl-budget-upload-icon">📄</span>
+              <span>Click to upload budget document</span>
+              <span className="wl-budget-upload-hint">Image or PDF</span>
             </div>
           )}
         </div>
@@ -218,6 +225,8 @@ export const CreateOrganization = () => {
             style={{ marginTop: 8, width: '100%' }}
             onClick={() => {
               setPreviewUrl(null);
+              setUploadedFileName(null);
+              setIsPdf(false);
               setScanState('idle');
               setAllocations(EMPTY_ALLOCATIONS);
               if (fileInputRef.current) fileInputRef.current.value = '';

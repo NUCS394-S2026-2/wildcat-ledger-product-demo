@@ -1,6 +1,6 @@
 /**
  * parseBudgetAllocation.ts
- * Sends a budget allocation document image to Google Cloud Vision API
+ * Sends a budget allocation document (image or PDF) to Google Cloud Vision API
  * and extracts Operating, ASG, and Gifts amounts.
  */
 
@@ -19,32 +19,80 @@ function fileToBase64(file: File): Promise<string> {
   });
 }
 
-// Find a dollar amount near a keyword in the OCR text.
-// Searches the same line first, then the next line.
+/**
+ * Find ALL dollar amounts on lines matching a keyword, return the largest one.
+ * Also checks the next 2 lines after a keyword match (for table formats where
+ * the label and value are on separate lines).
+ */
 function findAmountNear(lines: string[], keyword: RegExp): number {
-  const dollarPattern = /\$?\s*(\d{1,6}(?:[.,]\d{1,2})?)/;
+  // Matches things like: $1,234.56  |  1234.56  |  1,234  |  (1,234.56)
+  const dollarPattern = /\(?\$?\s*([\d,]+(?:\.\d{1,2})?)\)?/g;
+
+  const parseMatch = (str: string): number => {
+    const matches = [...str.matchAll(dollarPattern)];
+    if (!matches.length) return 0;
+    // Return the largest number found (avoids picking up tiny reference numbers)
+    return Math.max(
+      ...matches.map((m) => parseFloat(m[1].replace(/,/g, ''))).filter((n) => !isNaN(n)),
+    );
+  };
 
   for (let i = 0; i < lines.length; i++) {
     if (keyword.test(lines[i])) {
-      // Try current line
-      const m = lines[i].match(dollarPattern);
-      if (m) return parseFloat(m[1].replace(',', '.'));
-      // Try next line
-      if (i + 1 < lines.length) {
-        const m2 = lines[i + 1].match(dollarPattern);
-        if (m2) return parseFloat(m2[1].replace(',', '.'));
+      // Try current line first
+      const onLine = parseMatch(lines[i]);
+      if (onLine > 0) return onLine;
+      // Try next 2 lines (common in tabular/PDF layouts)
+      for (let j = i + 1; j <= i + 2 && j < lines.length; j++) {
+        const nearby = parseMatch(lines[j]);
+        if (nearby > 0) return nearby;
       }
     }
   }
   return 0;
 }
 
-export async function parseBudgetAllocation(file: File): Promise<BudgetScanResult> {
-  const apiKey = import.meta.env.VITE_GOOGLE_VISION_API_KEY;
-  if (!apiKey) throw new Error('VITE_GOOGLE_VISION_API_KEY is not set in .env');
+/** Extract full text from all pages of a PDF via Vision files:annotate */
+async function extractTextFromPdf(base64: string, apiKey: string): Promise<string> {
+  const response = await fetch(
+    `https://vision.googleapis.com/v1/files:annotate?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        requests: [
+          {
+            inputConfig: {
+              content: base64,
+              mimeType: 'application/pdf',
+            },
+            features: [{ type: 'DOCUMENT_TEXT_DETECTION' }],
+            // Read up to 5 pages
+            pages: [1, 2, 3, 4, 5],
+          },
+        ],
+      }),
+    },
+  );
 
-  const base64 = await fileToBase64(file);
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err?.error?.message ?? 'Vision API PDF request failed');
+  }
 
+  const data = await response.json();
+  // files:annotate response: data.responses[0].responses[page].fullTextAnnotation.text
+  const pageResponses: unknown[] = data.responses?.[0]?.responses ?? [];
+  return pageResponses
+    .map(
+      (p) =>
+        (p as { fullTextAnnotation?: { text?: string } }).fullTextAnnotation?.text ?? '',
+    )
+    .join('\n');
+}
+
+/** Extract full text from an image via Vision images:annotate */
+async function extractTextFromImage(base64: string, apiKey: string): Promise<string> {
   const response = await fetch(
     `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`,
     {
@@ -54,7 +102,7 @@ export async function parseBudgetAllocation(file: File): Promise<BudgetScanResul
         requests: [
           {
             image: { content: base64 },
-            features: [{ type: 'TEXT_DETECTION', maxResults: 1 }],
+            features: [{ type: 'DOCUMENT_TEXT_DETECTION', maxResults: 1 }],
           },
         ],
       }),
@@ -63,14 +111,32 @@ export async function parseBudgetAllocation(file: File): Promise<BudgetScanResul
 
   if (!response.ok) {
     const err = await response.json();
-    throw new Error(err?.error?.message ?? 'Vision API request failed');
+    throw new Error(err?.error?.message ?? 'Vision API image request failed');
   }
 
   const data = await response.json();
-  const fullText: string =
+  return (
     data.responses?.[0]?.fullTextAnnotation?.text ??
     data.responses?.[0]?.textAnnotations?.[0]?.description ??
-    '';
+    ''
+  );
+}
+
+export async function parseBudgetAllocation(file: File): Promise<BudgetScanResult> {
+  const apiKey = import.meta.env.VITE_GOOGLE_VISION_API_KEY;
+  if (!apiKey) throw new Error('VITE_GOOGLE_VISION_API_KEY is not set in .env');
+
+  const base64 = await fileToBase64(file);
+  const isPdf =
+    file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+
+  const fullText = isPdf
+    ? await extractTextFromPdf(base64, apiKey)
+    : await extractTextFromImage(base64, apiKey);
+
+  if (!fullText.trim()) {
+    throw new Error('No text could be extracted from this document');
+  }
 
   const lines = fullText
     .split('\n')
