@@ -371,6 +371,28 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const cancelPendingChange = async (pendingId: string) => {
+    if (!activeOrganizationId) return;
+    const pending = pendingChanges.find((p) => p.id === pendingId);
+    const pendingRef = doc(
+      db,
+      'clubs',
+      activeOrganizationId,
+      'pendingChanges',
+      pendingId,
+    );
+    await deleteDoc(pendingRef);
+    if (pending) {
+      await writeAuditEntry(
+        'cancel',
+        pending.transactionId,
+        pending.transactionTitle,
+        pending.before,
+        pending.after,
+      );
+    }
+  };
+
   const updateBudgetAllocations = async (allocations: BudgetAllocations) => {
     if (!activeOrganizationId) return;
     const orgRef = doc(db, 'clubs', activeOrganizationId);
@@ -430,6 +452,7 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     deleteTransaction,
     approvePendingChange,
     rejectPendingChange,
+    cancelPendingChange,
     updateBudgetAllocations,
     initializeBudgetAllocations,
     selectedBudgetLine,
