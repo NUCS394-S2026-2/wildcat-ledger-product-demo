@@ -56,11 +56,18 @@ const actionLabel = (action: AuditEntry['action'], after: AuditEntry['after']) =
       className: 'wl-audit-badge--approve',
       entryClass: 'wl-audit-entry--approve',
     };
+  if (action === 'reject')
+    return {
+      label: 'Rejected',
+      icon: '✕',
+      className: 'wl-audit-badge--reject',
+      entryClass: 'wl-audit-entry--reject',
+    };
   return {
-    label: after === null ? 'Rejected Delete' : 'Rejected Edit',
-    icon: '✕',
-    className: 'wl-audit-badge--reject',
-    entryClass: 'wl-audit-entry--reject',
+    label: 'Cancelled',
+    icon: '↩',
+    className: 'wl-audit-badge--cancel',
+    entryClass: 'wl-audit-entry--cancel',
   };
 };
 

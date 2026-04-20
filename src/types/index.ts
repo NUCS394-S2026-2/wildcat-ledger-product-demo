@@ -38,7 +38,8 @@ export type AuditAction =
   | 'request_edit'
   | 'request_delete'
   | 'approve'
-  | 'reject';
+  | 'reject'
+  | 'cancel';
 
 export interface AuditEntry {
   id: string;
@@ -106,6 +107,7 @@ export interface LedgerContextValue {
   deleteTransaction: (id: string) => Promise<void>;
   approvePendingChange: (pendingId: string) => Promise<void>;
   rejectPendingChange: (pendingId: string) => Promise<void>;
+  cancelPendingChange: (pendingId: string) => Promise<void>;
   updateBudgetAllocations: (allocations: BudgetAllocations) => Promise<void>;
   initializeBudgetAllocations: (allocations: BudgetAllocations) => Promise<void>;
   selectedBudgetLine: BudgetLine | null;
