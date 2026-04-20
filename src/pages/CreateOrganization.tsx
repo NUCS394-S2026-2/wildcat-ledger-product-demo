@@ -229,7 +229,7 @@ export const CreateOrganization = () => {
           <button
             type="button"
             className="wl-btn-secondary"
-            style={{ marginTop: 8, width: '100%' }}
+            style={{ marginTop: 8 }}
             onClick={() => {
               setPreviewUrl(null);
               setUploadedFileName(null);
