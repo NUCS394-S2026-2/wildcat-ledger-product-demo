@@ -9,8 +9,8 @@ export const useRole = (): UserRole | null => {
   if (!user?.email || !activeOrganization) return null;
 
   const email = user.email;
-  if (activeOrganization.treasurer === email) return 'treasurer';
-  if (activeOrganization.president === email) return 'president';
+  if (activeOrganization.treasurer?.includes(email)) return 'treasurer';
+  if (activeOrganization.president?.includes(email)) return 'president';
   if (activeOrganization.officers?.includes(email)) return 'officer';
 
   // Backwards compat: existing orgs only have admins[] — treat them as treasurer
