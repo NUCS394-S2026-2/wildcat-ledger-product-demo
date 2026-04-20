@@ -99,6 +99,7 @@ export const AddTransactionForm = ({
   const [submitting, setSubmitting] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [overdraftWarning, setOverdraftWarning] = useState<string | null>(null);
   const [pendingTransaction, setPendingTransaction] = useState<Omit<
     Transaction,
@@ -176,6 +177,7 @@ export const AddTransactionForm = ({
 
   const submitTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     setSubmitting(true);
+    setError(null);
     try {
       if (isEditing && existingTransaction) {
         await updateTransaction(existingTransaction.id, transaction);
@@ -185,7 +187,17 @@ export const AddTransactionForm = ({
       setForm(initialForm);
       setPendingTransaction(null);
       setOverdraftWarning(null);
-      onSuccess?.();
+      setSuccessMessage(
+        isEditing
+          ? 'Transaction updated successfully.'
+          : 'Transaction added successfully.',
+      );
+      setTimeout(() => {
+        setSuccessMessage(null);
+        onSuccess?.();
+      }, 1500);
+    } catch {
+      setError('Something went wrong. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -629,6 +641,12 @@ export const AddTransactionForm = ({
       {error && (
         <div className="wl-form-error" role="alert">
           {error}
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="wl-form-success" role="status">
+          {successMessage}
         </div>
       )}
 

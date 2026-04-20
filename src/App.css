@@ -722,6 +722,15 @@
   font-weight: 500;
 }
 
+.wl-form-success {
+  background: #d1fae5;
+  color: #065f46;
+  font-size: 0.82rem;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+}
+
 .wl-overdraft-warning {
   background: #fff8e1;
   border: 1.5px solid #f59e0b;

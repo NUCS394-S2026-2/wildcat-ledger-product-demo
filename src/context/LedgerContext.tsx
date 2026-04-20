@@ -101,10 +101,9 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
               const txnsSnap = await getDocs(
                 collection(db, 'clubs', doc.id, 'transactions'),
               );
-              const transactions: Transaction[] = txnsSnap.docs.map((t) => ({
-                id: t.id,
-                ...(t.data() as Omit<Transaction, 'id'>),
-              }));
+              const transactions: Transaction[] = txnsSnap.docs
+                .map((t) => ({ id: t.id, ...(t.data() as Omit<Transaction, 'id'>) }))
+                .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
               return {
                 id: doc.id,
                 name: data.name as string,
@@ -134,10 +133,9 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
 
     const txnsRef = collection(db, 'clubs', activeOrganizationId, 'transactions');
     const unsubTxns = onSnapshot(txnsRef, (snapshot) => {
-      const transactions: Transaction[] = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...(doc.data() as Omit<Transaction, 'id'>),
-      }));
+      const transactions: Transaction[] = snapshot.docs
+        .map((doc) => ({ id: doc.id, ...(doc.data() as Omit<Transaction, 'id'>) }))
+        .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
       setOrganizations((prev) =>
         prev.map((o) => (o.id === activeOrganizationId ? { ...o, transactions } : o)),
       );
@@ -237,7 +235,10 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     if (!activeOrganizationId) return;
     const txnsRef = collection(db, 'clubs', activeOrganizationId, 'transactions');
-    const ref = await addDoc(txnsRef, toFirestore(transaction));
+    const ref = await addDoc(
+      txnsRef,
+      toFirestore({ ...transaction, createdAt: Date.now() }),
+    );
     await applyDelta(
       activeOrganizationId,
       transaction.budgetLine,

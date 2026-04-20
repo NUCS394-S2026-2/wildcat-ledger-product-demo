@@ -30,7 +30,7 @@ const TransactionRow = ({
   const currentEmail = auth.currentUser?.email;
   const isMyPending = !!pending && pending.requestedBy === currentEmail;
   const canApprove = !!pending && !isMyPending && canEdit;
-  const colSpan = canEdit ? 5 : 4;
+  const colSpan = canEdit ? 6 : 5;
 
   const changedKeys =
     pending?.type === 'edit' && pending.before && pending.after
@@ -61,6 +61,15 @@ const TransactionRow = ({
         <td className="wl-td wl-td-type">{t.type}</td>
         <td className="wl-td wl-td-budget">
           <span className="wl-budget-chip">{t.budgetLine}</span>
+        </td>
+        <td className="wl-td wl-td-date">
+          {t.createdAt
+            ? new Date(t.createdAt).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              })
+            : '—'}
         </td>
         {canEdit && (
           <td className="wl-td wl-td-actions">
@@ -223,6 +232,7 @@ export const TransactionList = () => {
                 <th className="wl-th">Amount</th>
                 <th className="wl-th">Type</th>
                 <th className="wl-th">Budget Line</th>
+                <th className="wl-th">Date Added</th>
                 {canEdit && <th className="wl-th">Actions</th>}
               </tr>
             </thead>

@@ -14,6 +14,7 @@ export interface Transaction {
   id: string;
   title: string;
   amount: number;
+  createdAt?: number;
   direction: TransactionDirection;
   type: TransactionType;
   funding?: Funding;
