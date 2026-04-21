@@ -442,9 +442,19 @@ export const AddTransactionForm = ({
         {form.type === 'Direct payment' && (
           <>
             <div className="wl-form-group">
-              <label className="wl-form-label" htmlFor="contractFile">
-                Contract Photo {!isEditing && <span className="wl-form-required">*</span>}
-              </label>
+              <div className="wl-form-label-row">
+                <label className="wl-form-label" htmlFor="contractFile">
+                  Contract {!isEditing && <span className="wl-form-required">*</span>}
+                </label>
+                <a
+                  href="/forms/rso-agreement.pdf"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="wl-form-template-link"
+                >
+                  ↓ Blank RSO Agreement
+                </a>
+              </div>
               <input
                 id="contractFile"
                 name="contractFile"
@@ -468,9 +478,19 @@ export const AddTransactionForm = ({
             </div>
 
             <div className="wl-form-group">
-              <label className="wl-form-label" htmlFor="w9File">
-                W-9 Photo {!isEditing && <span className="wl-form-required">*</span>}
-              </label>
+              <div className="wl-form-label-row">
+                <label className="wl-form-label" htmlFor="w9File">
+                  W-9 {!isEditing && <span className="wl-form-required">*</span>}
+                </label>
+                <a
+                  href="/forms/w9.pdf"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="wl-form-template-link"
+                >
+                  ↓ Blank W-9
+                </a>
+              </div>
               <input
                 id="w9File"
                 name="w9File"
@@ -506,10 +526,20 @@ export const AddTransactionForm = ({
             {form.isIndividualVendor && (
               <>
                 <div className="wl-form-group">
-                  <label className="wl-form-label" htmlFor="contractedServicesFile">
-                    Contracted Services Form{' '}
-                    {!isEditing && <span className="wl-form-required">*</span>}
-                  </label>
+                  <div className="wl-form-label-row">
+                    <label className="wl-form-label" htmlFor="contractedServicesFile">
+                      Contracted Services Form{' '}
+                      {!isEditing && <span className="wl-form-required">*</span>}
+                    </label>
+                    <a
+                      href="/forms/contracted-services.pdf"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="wl-form-template-link"
+                    >
+                      ↓ Blank Form
+                    </a>
+                  </div>
                   <input
                     id="contractedServicesFile"
                     name="contractedServicesFile"
@@ -533,10 +563,20 @@ export const AddTransactionForm = ({
                 </div>
 
                 <div className="wl-form-group">
-                  <label className="wl-form-label" htmlFor="conflictOfInterestFile">
-                    Conflict of Interest Form{' '}
-                    {!isEditing && <span className="wl-form-required">*</span>}
-                  </label>
+                  <div className="wl-form-label-row">
+                    <label className="wl-form-label" htmlFor="conflictOfInterestFile">
+                      Conflict of Interest Form{' '}
+                      {!isEditing && <span className="wl-form-required">*</span>}
+                    </label>
+                    <a
+                      href="/forms/conflict-of-interest.pdf"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="wl-form-template-link"
+                    >
+                      ↓ Blank Form
+                    </a>
+                  </div>
                   <input
                     id="conflictOfInterestFile"
                     name="conflictOfInterestFile"
