@@ -444,7 +444,8 @@ export const AddTransactionForm = ({
             <div className="wl-form-group">
               <div className="wl-form-label-row">
                 <label className="wl-form-label" htmlFor="contractFile">
-                  Contract {!isEditing && <span className="wl-form-required">*</span>}
+                  RSO Agreement{' '}
+                  {!isEditing && <span className="wl-form-required">*</span>}
                 </label>
                 <a
                   href="/forms/rso-agreement.pdf"
@@ -537,7 +538,7 @@ export const AddTransactionForm = ({
                       rel="noreferrer"
                       className="wl-form-template-link"
                     >
-                      ↓ Blank Form
+                      ↓ Blank Contracted Services Form
                     </a>
                   </div>
                   <input
@@ -574,7 +575,7 @@ export const AddTransactionForm = ({
                       rel="noreferrer"
                       className="wl-form-template-link"
                     >
-                      ↓ Blank Form
+                      ↓ Blank Conflict of Interest Form
                     </a>
                   </div>
                   <input
