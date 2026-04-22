@@ -684,6 +684,29 @@
   margin-right: 8px;
 }
 
+.wl-form-label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.wl-form-label-row .wl-form-label {
+  margin-bottom: 0;
+}
+
+.wl-form-template-link {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.wl-form-template-link:hover {
+  text-decoration: underline;
+}
+
 .wl-form-file-existing {
   font-size: 0.78rem;
   color: var(--color-text-muted);
