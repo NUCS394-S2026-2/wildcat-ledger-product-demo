@@ -20,6 +20,7 @@ interface AddTransactionFormProps {
 
 interface FormState {
   title: string;
+  date: string;
   amount: string;
   type: SupportedType;
   funding: FundingOption;
@@ -36,8 +37,11 @@ interface FormState {
   notes: string;
 }
 
+const todayISO = () => new Date().toISOString().slice(0, 10);
+
 const initialForm: FormState = {
   title: '',
+  date: todayISO(),
   amount: '',
   type: 'Debit card purchase',
   funding: 'ASG',
@@ -80,6 +84,7 @@ export const AddTransactionForm = ({
       ).includes(t.type);
       return {
         title: t.title,
+        date: t.date ?? todayISO(),
         amount: String(t.amount),
         type: isSupportedType ? (t.type as SupportedType) : 'Debit card purchase',
         funding: (t.budgetLine === 'Debit Card' ? 'ASG' : t.budgetLine) as FundingOption,
@@ -285,6 +290,7 @@ export const AddTransactionForm = ({
 
     const newTransaction: Omit<Transaction, 'id'> = {
       title: form.title.trim(),
+      date: form.date || todayISO(),
       amount,
       direction,
       type: form.type,
@@ -347,6 +353,21 @@ export const AddTransactionForm = ({
           value={form.title}
           onChange={handleChange}
           placeholder="e.g. DJ equipment rental"
+        />
+      </div>
+
+      <div className="wl-form-group">
+        <label className="wl-form-label" htmlFor="date">
+          Date <span className="wl-form-required">*</span>
+        </label>
+        <input
+          id="date"
+          name="date"
+          type="date"
+          className="wl-form-input"
+          value={form.date}
+          max={todayISO()}
+          onChange={handleChange}
         />
       </div>
 

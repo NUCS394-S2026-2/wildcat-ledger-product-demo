@@ -13,6 +13,7 @@ export type TransactionDirection = 'Inflow' | 'Outflow';
 export interface Transaction {
   id: string;
   title: string;
+  date?: string; // stored as YYYY-MM-DD
   amount: number;
   direction: TransactionDirection;
   type: TransactionType;

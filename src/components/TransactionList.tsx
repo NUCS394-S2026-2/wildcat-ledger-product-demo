@@ -4,7 +4,111 @@ import { auth } from '../config/firebase';
 import { useLedger } from '../hooks/useLedger';
 import { PendingChange, Transaction } from '../types';
 import { formatCurrency } from '../utilities/calculations';
+
+const formatDate = (iso?: string) => {
+  if (!iso) return '—';
+  const [y, m, d] = iso.split('-');
+  return `${m}/${d}/${y}`;
+};
 import { TransactionModal } from './TransactionModal';
+
+const FILE_LABELS: { key: keyof Transaction; label: string }[] = [
+  { key: 'receiptFileUrl', label: 'Receipt' },
+  { key: 'contractFileUrl', label: 'RSO Agreement / Contract' },
+  { key: 'w9FileUrl', label: 'W-9 Form' },
+  { key: 'contractedServicesFileUrl', label: 'Contracted Services Form' },
+  { key: 'conflictOfInterestFileUrl', label: 'Conflict of Interest Form' },
+];
+
+const getTransactionFiles = (t: Transaction) =>
+  FILE_LABELS.flatMap(({ key, label }) => {
+    const url = t[key];
+    return typeof url === 'string' ? [{ label, url }] : [];
+  });
+
+const FilePreviewCard = ({ label, url }: { label: string; url: string }) => {
+  const [imgFailed, setImgFailed] = useState(false);
+
+  return (
+    <div className="wl-file-card">
+      <div className="wl-file-card-label">{label}</div>
+      {!imgFailed ? (
+        <img
+          src={url}
+          alt={label}
+          className="wl-file-preview-img"
+          onError={() => setImgFailed(true)}
+        />
+      ) : (
+        <div className="wl-file-pdf-placeholder">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="36"
+            height="36"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+            <line x1="10" y1="9" x2="8" y2="9" />
+          </svg>
+          <span>PDF Document</span>
+        </div>
+      )}
+      <a href={url} target="_blank" rel="noreferrer" className="wl-file-open-link">
+        Open in new tab ↗
+      </a>
+    </div>
+  );
+};
+
+const TransactionFilesModal = ({
+  transaction,
+  onClose,
+}: {
+  transaction: Transaction;
+  onClose: () => void;
+}) => {
+  const files = getTransactionFiles(transaction);
+
+  return (
+    <div className="wl-modal-root" role="dialog" aria-modal="true">
+      <div
+        className="wl-modal-overlay"
+        role="button"
+        tabIndex={0}
+        aria-label="Close"
+        onClick={onClose}
+        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onClose()}
+      />
+      <div className="wl-modal wl-files-modal">
+        <div className="wl-modal-header">
+          <h2 className="wl-modal-title">Attachments — {transaction.title}</h2>
+          <button className="wl-modal-close" onClick={onClose} aria-label="Close">
+            ✕
+          </button>
+        </div>
+        <div className="wl-modal-body">
+          {files.length === 0 ? (
+            <p className="wl-files-empty">No files attached to this transaction.</p>
+          ) : (
+            <div className="wl-files-grid">
+              {files.map(({ label, url }) => (
+                <FilePreviewCard key={label} label={label} url={url} />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const TransactionRow = ({
   t,
@@ -15,6 +119,7 @@ const TransactionRow = ({
   onApprove,
   onReject,
   onCancel,
+  onViewFiles,
 }: {
   t: Transaction;
   canEdit: boolean;
@@ -24,13 +129,15 @@ const TransactionRow = ({
   onApprove: (pendingId: string) => void;
   onReject: (pendingId: string) => void;
   onCancel: (pendingId: string) => void;
+  onViewFiles: (t: Transaction) => void;
 }) => {
   const [showDetail, setShowDetail] = useState(false);
   const isInflow = t.direction === 'Inflow';
+  const fileCount = getTransactionFiles(t).length;
   const currentEmail = auth.currentUser?.email;
   const isMyPending = !!pending && pending.requestedBy === currentEmail;
   const canApprove = !!pending && !isMyPending && canEdit;
-  const colSpan = canEdit ? 5 : 4;
+  const colSpan = canEdit ? 6 : 5;
 
   const changedKeys =
     pending?.type === 'edit' && pending.before && pending.after
@@ -52,6 +159,7 @@ const TransactionRow = ({
             </span>
           )}
         </td>
+        <td className="wl-td wl-td-date">{formatDate(t.date)}</td>
         <td
           className={`wl-td wl-td-amount ${isInflow ? 'wl-amount-positive' : 'wl-amount-negative'}`}
         >
@@ -105,6 +213,29 @@ const TransactionRow = ({
               ) : null
             ) : (
               <>
+                {fileCount > 0 && (
+                  <button
+                    type="button"
+                    className="wl-action-btn"
+                    onClick={() => onViewFiles(t)}
+                    aria-label={`View ${fileCount} attached file${fileCount !== 1 ? 's' : ''}`}
+                    title="View attached files"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                    </svg>
+                  </button>
+                )}
                 <button
                   type="button"
                   className="wl-action-btn"
@@ -197,6 +328,8 @@ export const TransactionList = () => {
   const [deletingTransaction, setDeletingTransaction] = useState<Transaction | null>(
     null,
   );
+  const [viewingFilesTransaction, setViewingFilesTransaction] =
+    useState<Transaction | null>(null);
 
   const handleDeleteConfirm = async () => {
     if (!deletingTransaction) return;
@@ -220,6 +353,7 @@ export const TransactionList = () => {
             <thead>
               <tr>
                 <th className="wl-th">Title</th>
+                <th className="wl-th">Date</th>
                 <th className="wl-th">Amount</th>
                 <th className="wl-th">Type</th>
                 <th className="wl-th">Budget Line</th>
@@ -238,10 +372,11 @@ export const TransactionList = () => {
                     onApprove={approvePendingChange}
                     onReject={rejectPendingChange}
                     onCancel={cancelPendingChange}
+                    onViewFiles={setViewingFilesTransaction}
                   />
                   {deletingTransaction?.id === t.id && (
                     <tr className="wl-delete-confirm-row">
-                      <td colSpan={canEdit ? 5 : 4} className="wl-delete-confirm-cell">
+                      <td colSpan={canEdit ? 6 : 5} className="wl-delete-confirm-cell">
                         <div className="wl-inline-confirm wl-inline-confirm--inline">
                           <p>
                             Submit a delete request for <strong>{t.title}</strong>? The
@@ -280,6 +415,13 @@ export const TransactionList = () => {
         onClose={() => setEditingTransaction(null)}
         existingTransaction={editingTransaction ?? undefined}
       />
+
+      {viewingFilesTransaction && (
+        <TransactionFilesModal
+          transaction={viewingFilesTransaction}
+          onClose={() => setViewingFilesTransaction(null)}
+        />
+      )}
     </>
   );
 };
