@@ -7,7 +7,7 @@ import { LedgerProvider } from './context/LedgerContext';
 import { useAuth } from './hooks/useAuth';
 import { AuditLogPage } from './pages/AuditLogPage';
 import { CreateOrganization } from './pages/CreateOrganization';
-import { DashboardOptionB } from './pages/DashboardOptionB';
+import { Dashboard } from './pages/Dashboard';
 import { LoginPage } from './pages/LoginPage';
 import { OrganizationsPage } from './pages/OrganizationsPage';
 const ProtectedLayout = () => {
@@ -29,7 +29,7 @@ const App = () => (
         <Route element={<ProtectedLayout />}>
           <Route path="/organizations" element={<OrganizationsPage />} />
           <Route path="/budget-setup" element={<CreateOrganization />} />
-          <Route path="/dashboard" element={<DashboardOptionB />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/audit-log" element={<AuditLogPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/login" replace />} />
