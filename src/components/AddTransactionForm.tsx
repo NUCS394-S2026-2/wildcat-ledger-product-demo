@@ -272,8 +272,15 @@ export const AddTransactionForm = ({
     // Type-specific validation
     if (form.type === 'Debit card purchase') {
       const hasExistingReceipt = isEditing && !!existingTransaction?.receiptFileUrl;
-      if (!form.receiptFile && !hasExistingReceipt && !form.noReceiptAcknowledged && !requestedDocTypes.has('receipt')) {
-        setError('Upload a receipt, request one via email, or check "I don\'t have a receipt".');
+      if (
+        !form.receiptFile &&
+        !hasExistingReceipt &&
+        !form.noReceiptAcknowledged &&
+        !requestedDocTypes.has('receipt')
+      ) {
+        setError(
+          'Upload a receipt, request one via email, or check "I don\'t have a receipt".',
+        );
         return;
       }
     }
@@ -501,44 +508,44 @@ export const AddTransactionForm = ({
                 {scanning && <span className="wl-ocr-scanning"> Scanning…</span>}
               </label>
               <div className="wl-receipt-options">
-              <input
-                id="receiptFile"
-                name="receiptFile"
-                type="file"
-                accept="image/*,application/pdf"
-                className="wl-form-file"
-                disabled={form.noReceiptAcknowledged}
-                onChange={handleReceiptChange}
-              />
-              {!isEditing && !form.noReceiptAcknowledged && (
-                <>
-                  <div className="wl-receipt-or">or</div>
-                  <button
-                    type="button"
-                    className="wl-btn-request-receipt"
-                    onClick={() => handleRequestDocument('receipt', 'Receipt')}
-                  >
-                    Request Receipt via Email
-                  </button>
-                  {requestedDocTypes.has('receipt') && (
-                    <span className="wl-receipt-requested-note">
-                      Receipt requested — waiting for member to upload
-                    </span>
-                  )}
-                </>
-              )}
-              {isEditing && existingTransaction?.receiptFileUrl && (
-                <span className="wl-form-file-existing">
-                  Current:{' '}
-                  <a
-                    href={existingTransaction.receiptFileUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    View file
-                  </a>
-                </span>
-              )}
+                <input
+                  id="receiptFile"
+                  name="receiptFile"
+                  type="file"
+                  accept="image/*,application/pdf"
+                  className="wl-form-file"
+                  disabled={form.noReceiptAcknowledged}
+                  onChange={handleReceiptChange}
+                />
+                {!isEditing && !form.noReceiptAcknowledged && (
+                  <>
+                    <div className="wl-receipt-or">or</div>
+                    <button
+                      type="button"
+                      className="wl-btn-request-receipt"
+                      onClick={() => handleRequestDocument('receipt', 'Receipt')}
+                    >
+                      Request Receipt via Email
+                    </button>
+                    {requestedDocTypes.has('receipt') && (
+                      <span className="wl-receipt-requested-note">
+                        Receipt requested — waiting for member to upload
+                      </span>
+                    )}
+                  </>
+                )}
+                {isEditing && existingTransaction?.receiptFileUrl && (
+                  <span className="wl-form-file-existing">
+                    Current:{' '}
+                    <a
+                      href={existingTransaction.receiptFileUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      View file
+                    </a>
+                  </span>
+                )}
               </div>
             </div>
 

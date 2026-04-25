@@ -2197,6 +2197,25 @@ tbody tr:last-child .wl-td {
   gap: 12px;
 }
 
+.wl-header-audit-btn {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.wl-header-audit-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: #fff;
+}
+
 .wl-btn-settings-header {
   background: rgba(255, 255, 255, 0.2);
   border: none;

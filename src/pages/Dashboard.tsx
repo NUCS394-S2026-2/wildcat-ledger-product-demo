@@ -39,6 +39,15 @@ export const Dashboard = () => {
         <div className="wl-header-optionB-left">
           <h1 className="wl-header-title">{activeOrganization?.name}</h1>
         </div>
+        <div className="wl-header-optionB-right">
+          <button
+            type="button"
+            className="wl-header-audit-btn"
+            onClick={() => navigate('/audit-log')}
+          >
+            Audit History
+          </button>
+        </div>
       </div>
 
       <div className="wl-dashboard-optionB">
@@ -78,13 +87,6 @@ export const Dashboard = () => {
           </div>
 
           <div className="wl-sidebar-footer-optionB">
-            <button
-              type="button"
-              className="wl-sidebar-audit-btn"
-              onClick={() => navigate('/audit-log')}
-            >
-              Audit History
-            </button>
             {canEdit && (
               <button
                 type="button"
