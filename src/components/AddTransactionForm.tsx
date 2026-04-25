@@ -1,5 +1,5 @@
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 
 import { storage } from '../config/firebase';
 import { useLedger } from '../hooks/useLedger';
@@ -114,6 +114,7 @@ export const AddTransactionForm = ({
   });
 
   const [submitting, setSubmitting] = useState(false);
+  const submitGuard = useRef(false);
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [overdraftWarning, setOverdraftWarning] = useState<string | null>(null);
@@ -211,6 +212,7 @@ export const AddTransactionForm = ({
       onSuccess?.();
     } finally {
       setSubmitting(false);
+      submitGuard.current = false;
     }
   };
 
@@ -255,7 +257,8 @@ export const AddTransactionForm = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (submitting) return;
+    if (submitGuard.current) return;
+    submitGuard.current = true;
     const amount = parseFloat(form.amount);
 
     if (!form.title.trim()) {
@@ -272,8 +275,15 @@ export const AddTransactionForm = ({
     // Type-specific validation
     if (form.type === 'Debit card purchase') {
       const hasExistingReceipt = isEditing && !!existingTransaction?.receiptFileUrl;
-      if (!form.receiptFile && !hasExistingReceipt && !form.noReceiptAcknowledged && !requestedDocTypes.has('receipt')) {
-        setError('Upload a receipt, request one via email, or check "I don\'t have a receipt".');
+      if (
+        !form.receiptFile &&
+        !hasExistingReceipt &&
+        !form.noReceiptAcknowledged &&
+        !requestedDocTypes.has('receipt')
+      ) {
+        setError(
+          'Upload a receipt, request one via email, or check "I don\'t have a receipt".',
+        );
         return;
       }
     }
@@ -501,44 +511,44 @@ export const AddTransactionForm = ({
                 {scanning && <span className="wl-ocr-scanning"> Scanning…</span>}
               </label>
               <div className="wl-receipt-options">
-              <input
-                id="receiptFile"
-                name="receiptFile"
-                type="file"
-                accept="image/*,application/pdf"
-                className="wl-form-file"
-                disabled={form.noReceiptAcknowledged}
-                onChange={handleReceiptChange}
-              />
-              {!isEditing && !form.noReceiptAcknowledged && (
-                <>
-                  <div className="wl-receipt-or">or</div>
-                  <button
-                    type="button"
-                    className="wl-btn-request-receipt"
-                    onClick={() => handleRequestDocument('receipt', 'Receipt')}
-                  >
-                    Request Receipt via Email
-                  </button>
-                  {requestedDocTypes.has('receipt') && (
-                    <span className="wl-receipt-requested-note">
-                      Receipt requested — waiting for member to upload
-                    </span>
-                  )}
-                </>
-              )}
-              {isEditing && existingTransaction?.receiptFileUrl && (
-                <span className="wl-form-file-existing">
-                  Current:{' '}
-                  <a
-                    href={existingTransaction.receiptFileUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    View file
-                  </a>
-                </span>
-              )}
+                <input
+                  id="receiptFile"
+                  name="receiptFile"
+                  type="file"
+                  accept="image/*,application/pdf"
+                  className="wl-form-file"
+                  disabled={form.noReceiptAcknowledged}
+                  onChange={handleReceiptChange}
+                />
+                {!isEditing && !form.noReceiptAcknowledged && (
+                  <>
+                    <div className="wl-receipt-or">or</div>
+                    <button
+                      type="button"
+                      className="wl-btn-request-receipt"
+                      onClick={() => handleRequestDocument('receipt', 'Receipt')}
+                    >
+                      Request Receipt via Email
+                    </button>
+                    {requestedDocTypes.has('receipt') && (
+                      <span className="wl-receipt-requested-note">
+                        Receipt requested — waiting for member to upload
+                      </span>
+                    )}
+                  </>
+                )}
+                {isEditing && existingTransaction?.receiptFileUrl && (
+                  <span className="wl-form-file-existing">
+                    Current:{' '}
+                    <a
+                      href={existingTransaction.receiptFileUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      View file
+                    </a>
+                  </span>
+                )}
               </div>
             </div>
 
@@ -612,7 +622,7 @@ export const AddTransactionForm = ({
                         )
                       }
                     >
-                      Request RSO Agreement via Email
+                      Request RSO Agreement Signature via Email
                     </button>
                     {requestedDocTypes.has('contract') && (
                       <span className="wl-receipt-requested-note">
@@ -741,7 +751,7 @@ export const AddTransactionForm = ({
                             )
                           }
                         >
-                          Request Contracted Services Form via Email
+                          Request Contracted Services Form Signature via Email
                         </button>
                         {requestedDocTypes.has('contractedServices') && (
                           <span className="wl-receipt-requested-note">
@@ -790,30 +800,6 @@ export const AddTransactionForm = ({
                       className="wl-form-file"
                       onChange={handleChange}
                     />
-                    {!isEditing && (
-                      <>
-                        <div className="wl-receipt-or">or</div>
-                        <button
-                          type="button"
-                          className="wl-btn-request-receipt"
-                          onClick={() =>
-                            handleRequestDocument(
-                              'conflictOfInterest',
-                              'Conflict of Interest Form',
-                              '/forms/conflict-of-interest.pdf',
-                            )
-                          }
-                        >
-                          Request Conflict of Interest Form via Email
-                        </button>
-                        {requestedDocTypes.has('conflictOfInterest') && (
-                          <span className="wl-receipt-requested-note">
-                            Conflict of Interest Form requested — waiting for vendor to
-                            upload
-                          </span>
-                        )}
-                      </>
-                    )}
                   </div>
                   {isEditing && existingTransaction?.conflictOfInterestFileUrl && (
                     <span className="wl-form-file-existing">

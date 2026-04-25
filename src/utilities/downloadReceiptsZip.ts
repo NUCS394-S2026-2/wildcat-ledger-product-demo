@@ -92,37 +92,38 @@ export async function downloadReceiptsZip(
   const zip = new JSZip();
   const receiptsFolder = zip.folder('receipts')!;
 
-  const withReceipts = transactions.filter((t) => t.receiptFileUrl);
+  const withDocs = transactions.filter((t) => t.receiptFileUrl || t.exemptionFormUrl);
 
-  if (withReceipts.length === 0) {
-    throw new Error('No receipts to download.');
+  if (withDocs.length === 0) {
+    throw new Error('No documents to download.');
   }
 
   await Promise.all(
-    withReceipts.map(async (t) => {
-      const url = t.receiptFileUrl!;
+    withDocs.map(async (t) => {
       const date = t.date ?? 'undated';
       const slug = slugify(t.title);
       const folderName = `${date}_${slug}`;
+      const folder = receiptsFolder.folder(folderName)!;
 
-      try {
-        console.log(`[ZIP] Fetching receipt for "${t.title}" — url: ${url}`);
-        const blob = await fetchBlob(url);
-        console.log(
-          `[ZIP] Got blob for "${t.title}" — size: ${blob.size}, type: ${blob.type}`,
-        );
-        const ext = extFromMimeType(blob.type);
-        console.log(`[ZIP] Writing receipt.${ext} for "${t.title}"`);
-        receiptsFolder.folder(folderName)!.file(`receipt.${ext}`, blob);
-      } catch (err) {
-        console.error(`[ZIP] Failed to fetch receipt for "${t.title}":`, err);
-        receiptsFolder
-          .folder(folderName)!
-          .file(
-            'receipt_unavailable.txt',
-            `Could not download receipt for: ${t.title}\nError: ${err instanceof Error ? err.message : String(err)}`,
-          );
-      }
+      const files: { url: string; name: string }[] = [];
+      if (t.receiptFileUrl) files.push({ url: t.receiptFileUrl, name: 'receipt' });
+      if (t.exemptionFormUrl)
+        files.push({ url: t.exemptionFormUrl, name: 'exemption_form' });
+
+      await Promise.all(
+        files.map(async ({ url, name }) => {
+          try {
+            const blob = await fetchBlob(url);
+            const ext = extFromMimeType(blob.type);
+            folder.file(`${name}.${ext}`, blob);
+          } catch (err) {
+            folder.file(
+              `${name}_unavailable.txt`,
+              `Could not download ${name} for: ${t.title}\nError: ${err instanceof Error ? err.message : String(err)}`,
+            );
+          }
+        }),
+      );
     }),
   );
 
