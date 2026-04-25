@@ -5,10 +5,27 @@ import { useSearchParams } from 'react-router-dom';
 
 import { db, storage } from '../config/firebase';
 
+const FILE_TYPE_MAP: Record<string, { field: string; label: string }> = {
+  receipt: { field: 'receiptFileUrl', label: 'Receipt' },
+  contract: { field: 'contractFileUrl', label: 'RSO Agreement' },
+  w9: { field: 'w9FileUrl', label: 'W-9' },
+  contractedServices: {
+    field: 'contractedServicesFileUrl',
+    label: 'Contracted Services Form',
+  },
+  conflictOfInterest: {
+    field: 'conflictOfInterestFileUrl',
+    label: 'Conflict of Interest Form',
+  },
+};
+
 export const UploadReceiptPage = () => {
   const [searchParams] = useSearchParams();
   const transactionId = searchParams.get('transactionId');
   const orgId = searchParams.get('orgId');
+  const rawFileType = searchParams.get('fileType') ?? 'receipt';
+  const fileType = rawFileType in FILE_TYPE_MAP ? rawFileType : 'receipt';
+  const { field: firestoreField, label: docLabel } = FILE_TYPE_MAP[fileType];
 
   const [txnTitle, setTxnTitle] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -45,12 +62,12 @@ export const UploadReceiptPage = () => {
     setUploading(true);
     setUploadError(null);
     try {
-      const path = `clubs/${orgId}/transactions/${transactionId}/receipt_${Date.now()}_${file.name}`;
+      const path = `clubs/${orgId}/transactions/${transactionId}/${fileType}_${Date.now()}_${file.name}`;
       const storageRef = ref(storage, path);
       await uploadBytes(storageRef, file);
       const url = await getDownloadURL(storageRef);
       const txnRef = doc(db, 'clubs', orgId, 'transactions', transactionId);
-      await updateDoc(txnRef, { receiptFileUrl: url });
+      await updateDoc(txnRef, { [firestoreField]: url });
       setSuccess(true);
     } catch {
       setUploadError('Upload failed. Please try again.');
@@ -73,7 +90,7 @@ export const UploadReceiptPage = () => {
     return (
       <div className="wl-upload-receipt-root">
         <div className="wl-upload-receipt-card">
-          <h1 className="wl-upload-receipt-title">Upload Receipt</h1>
+          <h1 className="wl-upload-receipt-title">Upload {docLabel}</h1>
           <p className="wl-form-error">{loadError}</p>
         </div>
       </div>
@@ -86,7 +103,7 @@ export const UploadReceiptPage = () => {
         <div className="wl-upload-receipt-card">
           <h1 className="wl-upload-receipt-title">Done!</h1>
           <p className="wl-upload-receipt-success">
-            Your receipt has been uploaded successfully.
+            Your {docLabel} has been uploaded successfully.
           </p>
           <p className="wl-upload-receipt-txn">You can close this tab.</p>
         </div>
@@ -97,18 +114,18 @@ export const UploadReceiptPage = () => {
   return (
     <div className="wl-upload-receipt-root">
       <div className="wl-upload-receipt-card">
-        <h1 className="wl-upload-receipt-title">Upload Receipt</h1>
+        <h1 className="wl-upload-receipt-title">Upload {docLabel}</h1>
         {txnTitle && (
           <p className="wl-upload-receipt-txn">
             Transaction: <strong>{txnTitle}</strong>
           </p>
         )}
         <div className="wl-form-group">
-          <label className="wl-form-label" htmlFor="upload-receipt-file">
-            Receipt photo or PDF
+          <label className="wl-form-label" htmlFor="upload-doc-file">
+            {docLabel} (photo or PDF)
           </label>
           <input
-            id="upload-receipt-file"
+            id="upload-doc-file"
             type="file"
             accept="image/*,application/pdf"
             className="wl-form-file"
@@ -129,7 +146,7 @@ export const UploadReceiptPage = () => {
           onClick={handleUpload}
           disabled={!file || uploading}
         >
-          {uploading ? 'Uploading…' : 'Upload Receipt'}
+          {uploading ? 'Uploading…' : `Upload ${docLabel}`}
         </button>
       </div>
     </div>
