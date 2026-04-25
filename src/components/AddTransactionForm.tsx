@@ -115,6 +115,7 @@ export const AddTransactionForm = ({
     id?: string;
   } | null>(null);
   const [preGeneratedId, setPreGeneratedId] = useState<string | null>(null);
+  const [requestedDocTypes, setRequestedDocTypes] = useState<Set<string>>(new Set());
 
   const handleReceiptChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null;
@@ -182,6 +183,7 @@ export const AddTransactionForm = ({
       conflictOfInterestFile: null,
       zelleInfo: '',
     }));
+    setRequestedDocTypes(new Set());
     setError(null);
   };
 
@@ -195,6 +197,7 @@ export const AddTransactionForm = ({
       }
       setForm(initialForm);
       setPreGeneratedId(null);
+      setRequestedDocTypes(new Set());
       setPendingTransaction(null);
       setOverdraftWarning(null);
       onSuccess?.();
@@ -203,9 +206,13 @@ export const AddTransactionForm = ({
     }
   };
 
-  const handleRequestReceipt = () => {
+  const handleRequestDocument = (
+    docType: string,
+    label: string,
+    templatePath?: string,
+  ) => {
     if (!form.title.trim()) {
-      setError('Please enter a transaction title before requesting a receipt via email.');
+      setError('Please enter a transaction title before requesting documents via email.');
       return;
     }
     let id = preGeneratedId;
@@ -213,15 +220,21 @@ export const AddTransactionForm = ({
       id = generateTransactionId();
       setPreGeneratedId(id);
     }
-    const uploadUrl = `${window.location.origin}/upload-receipt?transactionId=${id}&orgId=${encodeURIComponent(activeOrganizationId ?? '')}`;
-    const subject = encodeURIComponent(`Receipt Request — ${form.title.trim()}`);
+    const uploadUrl = `${window.location.origin}/upload-receipt?transactionId=${id}&orgId=${encodeURIComponent(activeOrganizationId ?? '')}&fileType=${docType}`;
+    const templateLine = templatePath
+      ? `\n\nYou can download a blank ${label} here:\n${window.location.origin}${templatePath}`
+      : '';
+    const subject = encodeURIComponent(
+      `Document Request — ${label} for "${form.title.trim()}"`,
+    );
     const body = encodeURIComponent(
-      `Hi,\n\nPlease upload your receipt for "${form.title.trim()}" using this link:\n\n${uploadUrl}\n\nThank you!`,
+      `Hi,\n\nPlease upload the ${label} for "${form.title.trim()}" using this link:\n\n${uploadUrl}${templateLine}\n\nThank you!`,
     );
     window.open(
       `https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`,
       '_blank',
     );
+    setRequestedDocTypes((prev) => new Set(prev).add(docType));
     setError(null);
   };
 
@@ -250,39 +263,43 @@ export const AddTransactionForm = ({
 
     // Type-specific validation
     if (form.type === 'Debit card purchase') {
-      if (!form.receiptFile && !isEditing && !preGeneratedId) {
+      if (!form.receiptFile && !isEditing && !requestedDocTypes.has('receipt')) {
         setError('Upload a receipt photo or request one via email.');
         return;
       }
     }
 
     if (form.type === 'Direct payment') {
-      if (!form.contractFile && !isEditing) {
-        setError('A photo of the contract is required.');
+      if (!form.contractFile && !isEditing && !requestedDocTypes.has('contract')) {
+        setError('Upload the RSO Agreement or request it via email.');
         return;
       }
-      if (!form.w9File && !isEditing) {
-        setError('A photo of the W-9 is required.');
+      if (!form.w9File && !isEditing && !requestedDocTypes.has('w9')) {
+        setError('Upload the W-9 or request it via email.');
         return;
       }
       if (form.isIndividualVendor) {
-        if (!form.contractedServicesFile && !isEditing) {
-          setError(
-            'A photo of the Contracted Services Form is required for individual vendors.',
-          );
+        if (
+          !form.contractedServicesFile &&
+          !isEditing &&
+          !requestedDocTypes.has('contractedServices')
+        ) {
+          setError('Upload the Contracted Services Form or request it via email.');
           return;
         }
-        if (!form.conflictOfInterestFile && !isEditing) {
-          setError(
-            'A photo of the Conflict of Interest Form is required for individual vendors.',
-          );
+        if (
+          !form.conflictOfInterestFile &&
+          !isEditing &&
+          !requestedDocTypes.has('conflictOfInterest')
+        ) {
+          setError('Upload the Conflict of Interest Form or request it via email.');
           return;
         }
       }
     }
 
     if (form.type === 'Reimbursement') {
-      if (!form.receiptFile && !isEditing && !preGeneratedId) {
+      if (!form.receiptFile && !isEditing && !requestedDocTypes.has('receipt')) {
         setError('Upload a receipt photo or request one via email.');
         return;
       }
@@ -483,11 +500,11 @@ export const AddTransactionForm = ({
                   <button
                     type="button"
                     className="wl-btn-request-receipt"
-                    onClick={handleRequestReceipt}
+                    onClick={() => handleRequestDocument('receipt', 'Receipt')}
                   >
                     Request Receipt via Email
                   </button>
-                  {preGeneratedId && (
+                  {requestedDocTypes.has('receipt') && (
                     <span className="wl-receipt-requested-note">
                       Receipt requested — waiting for member to upload
                     </span>
@@ -528,14 +545,39 @@ export const AddTransactionForm = ({
                   ↓ Blank RSO Agreement
                 </a>
               </div>
-              <input
-                id="contractFile"
-                name="contractFile"
-                type="file"
-                accept="image/*,application/pdf"
-                className="wl-form-file"
-                onChange={handleChange}
-              />
+              <div className="wl-receipt-options">
+                <input
+                  id="contractFile"
+                  name="contractFile"
+                  type="file"
+                  accept="image/*,application/pdf"
+                  className="wl-form-file"
+                  onChange={handleChange}
+                />
+                {!isEditing && (
+                  <>
+                    <div className="wl-receipt-or">or</div>
+                    <button
+                      type="button"
+                      className="wl-btn-request-receipt"
+                      onClick={() =>
+                        handleRequestDocument(
+                          'contract',
+                          'RSO Agreement',
+                          '/forms/rso-agreement.pdf',
+                        )
+                      }
+                    >
+                      Request RSO Agreement via Email
+                    </button>
+                    {requestedDocTypes.has('contract') && (
+                      <span className="wl-receipt-requested-note">
+                        RSO Agreement requested — waiting for vendor to upload
+                      </span>
+                    )}
+                  </>
+                )}
+              </div>
               {isEditing && existingTransaction?.contractFileUrl && (
                 <span className="wl-form-file-existing">
                   Current:{' '}
@@ -564,14 +606,33 @@ export const AddTransactionForm = ({
                   ↓ Blank W-9
                 </a>
               </div>
-              <input
-                id="w9File"
-                name="w9File"
-                type="file"
-                accept="image/*,application/pdf"
-                className="wl-form-file"
-                onChange={handleChange}
-              />
+              <div className="wl-receipt-options">
+                <input
+                  id="w9File"
+                  name="w9File"
+                  type="file"
+                  accept="image/*,application/pdf"
+                  className="wl-form-file"
+                  onChange={handleChange}
+                />
+                {!isEditing && (
+                  <>
+                    <div className="wl-receipt-or">or</div>
+                    <button
+                      type="button"
+                      className="wl-btn-request-receipt"
+                      onClick={() => handleRequestDocument('w9', 'W-9', '/forms/w9.pdf')}
+                    >
+                      Request W-9 via Email
+                    </button>
+                    {requestedDocTypes.has('w9') && (
+                      <span className="wl-receipt-requested-note">
+                        W-9 requested — waiting for vendor to upload
+                      </span>
+                    )}
+                  </>
+                )}
+              </div>
               {isEditing && existingTransaction?.w9FileUrl && (
                 <span className="wl-form-file-existing">
                   Current:{' '}
@@ -613,14 +674,40 @@ export const AddTransactionForm = ({
                       ↓ Blank Contracted Services Form
                     </a>
                   </div>
-                  <input
-                    id="contractedServicesFile"
-                    name="contractedServicesFile"
-                    type="file"
-                    accept="image/*,application/pdf"
-                    className="wl-form-file"
-                    onChange={handleChange}
-                  />
+                  <div className="wl-receipt-options">
+                    <input
+                      id="contractedServicesFile"
+                      name="contractedServicesFile"
+                      type="file"
+                      accept="image/*,application/pdf"
+                      className="wl-form-file"
+                      onChange={handleChange}
+                    />
+                    {!isEditing && (
+                      <>
+                        <div className="wl-receipt-or">or</div>
+                        <button
+                          type="button"
+                          className="wl-btn-request-receipt"
+                          onClick={() =>
+                            handleRequestDocument(
+                              'contractedServices',
+                              'Contracted Services Form',
+                              '/forms/contracted-services.pdf',
+                            )
+                          }
+                        >
+                          Request Contracted Services Form via Email
+                        </button>
+                        {requestedDocTypes.has('contractedServices') && (
+                          <span className="wl-receipt-requested-note">
+                            Contracted Services Form requested — waiting for vendor to
+                            upload
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </div>
                   {isEditing && existingTransaction?.contractedServicesFileUrl && (
                     <span className="wl-form-file-existing">
                       Current:{' '}
@@ -650,14 +737,40 @@ export const AddTransactionForm = ({
                       ↓ Blank Conflict of Interest Form
                     </a>
                   </div>
-                  <input
-                    id="conflictOfInterestFile"
-                    name="conflictOfInterestFile"
-                    type="file"
-                    accept="image/*,application/pdf"
-                    className="wl-form-file"
-                    onChange={handleChange}
-                  />
+                  <div className="wl-receipt-options">
+                    <input
+                      id="conflictOfInterestFile"
+                      name="conflictOfInterestFile"
+                      type="file"
+                      accept="image/*,application/pdf"
+                      className="wl-form-file"
+                      onChange={handleChange}
+                    />
+                    {!isEditing && (
+                      <>
+                        <div className="wl-receipt-or">or</div>
+                        <button
+                          type="button"
+                          className="wl-btn-request-receipt"
+                          onClick={() =>
+                            handleRequestDocument(
+                              'conflictOfInterest',
+                              'Conflict of Interest Form',
+                              '/forms/conflict-of-interest.pdf',
+                            )
+                          }
+                        >
+                          Request Conflict of Interest Form via Email
+                        </button>
+                        {requestedDocTypes.has('conflictOfInterest') && (
+                          <span className="wl-receipt-requested-note">
+                            Conflict of Interest Form requested — waiting for vendor to
+                            upload
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </div>
                   {isEditing && existingTransaction?.conflictOfInterestFileUrl && (
                     <span className="wl-form-file-existing">
                       Current:{' '}
@@ -699,11 +812,11 @@ export const AddTransactionForm = ({
                     <button
                       type="button"
                       className="wl-btn-request-receipt"
-                      onClick={handleRequestReceipt}
+                      onClick={() => handleRequestDocument('receipt', 'Receipt')}
                     >
                       Request Receipt via Email
                     </button>
-                    {preGeneratedId && (
+                    {requestedDocTypes.has('receipt') && (
                       <span className="wl-receipt-requested-note">
                         Receipt requested — waiting for member to upload
                       </span>
