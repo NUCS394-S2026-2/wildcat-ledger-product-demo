@@ -10,9 +10,10 @@ import {
   setDoc,
   updateDoc,
 } from 'firebase/firestore';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import React, { createContext, useEffect, useMemo, useState } from 'react';
 
-import { auth, db } from '../config/firebase';
+import { auth, db, storage } from '../config/firebase';
 import {
   AuditAction,
   AuditEntry,
@@ -445,6 +446,22 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     });
   };
 
+  // Uploads an exemption form for a debit card transaction missing a receipt,
+  // stores it in Firebase Storage, and saves the download URL on the transaction doc.
+  const uploadExemptionForm = async (transactionId: string, file: File) => {
+    if (!activeOrganizationId) return;
+    const path = `clubs/${activeOrganizationId}/transactions/${transactionId}/exemption-form_${Date.now()}_${file.name}`;
+    const storageRef = ref(storage, path);
+    await uploadBytes(storageRef, file);
+    const url = await getDownloadURL(storageRef);
+    await updateDoc(
+      doc(db, 'clubs', activeOrganizationId, 'transactions', transactionId),
+      {
+        exemptionFormUrl: url,
+      },
+    );
+  };
+
   const activeOrganization =
     organizations.find((o: Organization) => o.id === activeOrganizationId) ?? null;
 
@@ -495,6 +512,7 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     updateBudgetAllocations,
     initializeBudgetAllocations,
     reconcileTransactions,
+    uploadExemptionForm,
     selectedBudgetLine,
     setSelectedBudgetLine,
     filteredTransactions,

@@ -2747,4 +2747,113 @@ tbody tr:last-child .wl-td {
   gap: 12px;
   padding-top: 16px;
   border-top: 1.5px solid var(--color-border);
+  flex-wrap: wrap;
+}
+
+/* ─── Reconciliation item wrapper ───────────────────────────────── */
+.wl-recon-item {
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.wl-recon-item--warning {
+  border: 1.5px solid #f59e0b;
+  background: #fffbeb;
+}
+.wl-recon-item--warning .wl-recon-row:hover {
+  background: #fef3c7;
+}
+
+/* ─── Status badges inside row ──────────────────────────────────── */
+.wl-recon-badge {
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+.wl-recon-badge--warn {
+  color: #d97706;
+}
+
+/* ─── Missing receipt sub-panel ─────────────────────────────────── */
+.wl-recon-missing {
+  padding: 8px 12px 10px 40px;
+  border-top: 1px solid #fde68a;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.wl-recon-missing-msg {
+  font-size: 0.82rem;
+  color: #92400e;
+  margin: 0;
+}
+.wl-recon-exemption-link {
+  color: #7c3aed;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.wl-recon-exemption-link:hover {
+  color: #5b21b6;
+}
+.wl-recon-upload-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.wl-btn-upload-exemption {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid #d97706;
+  color: #92400e;
+  background: #fff;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    color 0.12s;
+}
+.wl-btn-upload-exemption:hover:not(:disabled) {
+  background: #fef3c7;
+}
+.wl-btn-upload-exemption:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.wl-recon-upload-error {
+  font-size: 0.78rem;
+  color: var(--color-negative);
+}
+
+/* ─── Block warning banner ──────────────────────────────────────── */
+.wl-recon-block-warning {
+  font-size: 0.85rem;
+  color: #92400e;
+  background: #fffbeb;
+  border: 1.5px solid #f59e0b;
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  margin-top: 12px;
+}
+
+/* ─── Download ZIP button ───────────────────────────────────────── */
+.wl-btn-download-zip {
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--color-primary);
+  color: var(--color-primary);
+  background: #fff;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.wl-btn-download-zip:hover:not(:disabled) {
+  background: #f5f3ff;
+}
+.wl-btn-download-zip:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }

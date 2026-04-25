@@ -33,6 +33,8 @@ export interface Transaction {
   // Reconciliation — Debit Card transactions only
   // null = not yet reconciled; number = epoch ms when reconciled
   reconciledAt?: number | null;
+  // Uploaded when the transaction has no receipt (satisfies receipt requirement for reconciliation)
+  exemptionFormUrl?: string;
 }
 
 export type AuditAction =
@@ -119,6 +121,7 @@ export interface LedgerContextValue {
   updateBudgetAllocations: (allocations: BudgetAllocations) => Promise<void>;
   initializeBudgetAllocations: (allocations: BudgetAllocations) => Promise<void>;
   reconcileTransactions: (transactionIds: string[]) => Promise<void>;
+  uploadExemptionForm: (transactionId: string, file: File) => Promise<void>;
   selectedBudgetLine: BudgetLine | null;
   setSelectedBudgetLine: (line: BudgetLine | null) => void;
   filteredTransactions: Transaction[];
