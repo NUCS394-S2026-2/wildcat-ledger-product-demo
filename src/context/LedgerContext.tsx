@@ -234,17 +234,29 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     return rest;
   };
 
-  const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
+  const generateTransactionId = (): string => {
+    if (!activeOrganizationId) throw new Error('No active organization');
+    return doc(collection(db, 'clubs', activeOrganizationId, 'transactions')).id;
+  };
+
+  const addTransaction = async (transaction: Omit<Transaction, 'id'>, id?: string) => {
     if (!activeOrganizationId) return;
     const txnsRef = collection(db, 'clubs', activeOrganizationId, 'transactions');
-    const ref = await addDoc(txnsRef, toFirestore(transaction));
+    let txnId: string;
+    if (id) {
+      await setDoc(doc(txnsRef, id), toFirestore(transaction));
+      txnId = id;
+    } else {
+      const newRef = await addDoc(txnsRef, toFirestore(transaction));
+      txnId = newRef.id;
+    }
     await applyDelta(
       activeOrganizationId,
       transaction.budgetLine,
       transaction.direction,
       transaction.amount,
     );
-    await writeAuditEntry('create', ref.id, transaction.title, null, transaction);
+    await writeAuditEntry('create', txnId, transaction.title, null, transaction);
   };
 
   const updateTransaction = async (id: string, transaction: Omit<Transaction, 'id'>) => {
@@ -447,6 +459,7 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     setActiveOrganizationId,
     activeOrganization,
     userRole,
+    generateTransactionId,
     addTransaction,
     updateTransaction,
     deleteTransaction,

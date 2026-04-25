@@ -103,7 +103,8 @@ export interface LedgerContextValue {
   setActiveOrganizationId: (id: string) => void;
   activeOrganization: Organization | null;
   userRole: UserRole | null;
-  addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
+  generateTransactionId: () => string;
+  addTransaction: (transaction: Omit<Transaction, 'id'>, id?: string) => Promise<void>;
   updateTransaction: (id: string, transaction: Omit<Transaction, 'id'>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
   approvePendingChange: (pendingId: string) => Promise<void>;

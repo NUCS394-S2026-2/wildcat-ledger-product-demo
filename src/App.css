@@ -2563,3 +2563,86 @@ tbody tr:last-child .wl-td {
 .wl-topnav-offset {
   padding-top: 64px;
 }
+
+/* ─── Request Receipt via Email ──────────────────────────────────── */
+.wl-receipt-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wl-receipt-or {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.wl-btn-request-receipt {
+  background: none;
+  border: 1.5px dashed var(--color-primary);
+  border-radius: var(--radius-sm);
+  color: var(--color-primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+  width: 100%;
+  font-family: inherit;
+}
+
+.wl-btn-request-receipt:hover {
+  background: #f3f0f8;
+}
+
+.wl-receipt-requested-note {
+  font-size: 0.78rem;
+  color: var(--color-positive);
+  font-weight: 500;
+}
+
+/* ─── Upload Receipt Page ────────────────────────────────────────── */
+.wl-upload-receipt-root {
+  min-height: 100vh;
+  background: var(--color-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+}
+
+.wl-upload-receipt-card {
+  background: var(--color-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 40px 48px;
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.wl-upload-receipt-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.wl-upload-receipt-txn {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.wl-upload-receipt-success {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-positive);
+  margin: 0;
+}

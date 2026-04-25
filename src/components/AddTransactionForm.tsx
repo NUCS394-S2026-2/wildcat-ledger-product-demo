@@ -72,8 +72,13 @@ export const AddTransactionForm = ({
   onSuccess,
   existingTransaction,
 }: AddTransactionFormProps) => {
-  const { addTransaction, updateTransaction, budgetLineSummaries, activeOrganizationId } =
-    useLedger();
+  const {
+    addTransaction,
+    updateTransaction,
+    budgetLineSummaries,
+    activeOrganizationId,
+    generateTransactionId,
+  } = useLedger();
   const isEditing = !!existingTransaction;
 
   const [form, setForm] = useState<FormState>(() => {
@@ -105,10 +110,11 @@ export const AddTransactionForm = ({
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [overdraftWarning, setOverdraftWarning] = useState<string | null>(null);
-  const [pendingTransaction, setPendingTransaction] = useState<Omit<
-    Transaction,
-    'id'
-  > | null>(null);
+  const [pendingTransaction, setPendingTransaction] = useState<{
+    transaction: Omit<Transaction, 'id'>;
+    id?: string;
+  } | null>(null);
+  const [preGeneratedId, setPreGeneratedId] = useState<string | null>(null);
 
   const handleReceiptChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null;
@@ -179,21 +185,44 @@ export const AddTransactionForm = ({
     setError(null);
   };
 
-  const submitTransaction = async (transaction: Omit<Transaction, 'id'>) => {
+  const submitTransaction = async (transaction: Omit<Transaction, 'id'>, id?: string) => {
     setSubmitting(true);
     try {
       if (isEditing && existingTransaction) {
         await updateTransaction(existingTransaction.id, transaction);
       } else {
-        await addTransaction(transaction);
+        await addTransaction(transaction, id);
       }
       setForm(initialForm);
+      setPreGeneratedId(null);
       setPendingTransaction(null);
       setOverdraftWarning(null);
       onSuccess?.();
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleRequestReceipt = () => {
+    if (!form.title.trim()) {
+      setError('Please enter a transaction title before requesting a receipt via email.');
+      return;
+    }
+    let id = preGeneratedId;
+    if (!id) {
+      id = generateTransactionId();
+      setPreGeneratedId(id);
+    }
+    const uploadUrl = `${window.location.origin}/upload-receipt?transactionId=${id}&orgId=${encodeURIComponent(activeOrganizationId ?? '')}`;
+    const subject = encodeURIComponent(`Receipt Request — ${form.title.trim()}`);
+    const body = encodeURIComponent(
+      `Hi,\n\nPlease upload your receipt for "${form.title.trim()}" using this link:\n\n${uploadUrl}\n\nThank you!`,
+    );
+    window.open(
+      `https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`,
+      '_blank',
+    );
+    setError(null);
   };
 
   const uploadFile = async (file: File): Promise<string> => {
@@ -221,8 +250,8 @@ export const AddTransactionForm = ({
 
     // Type-specific validation
     if (form.type === 'Debit card purchase') {
-      if (!form.receiptFile && !isEditing) {
-        setError('A photo of the receipt is required.');
+      if (!form.receiptFile && !isEditing && !preGeneratedId) {
+        setError('Upload a receipt photo or request one via email.');
         return;
       }
     }
@@ -253,8 +282,8 @@ export const AddTransactionForm = ({
     }
 
     if (form.type === 'Reimbursement') {
-      if (!form.receiptFile && !isEditing) {
-        setError('A photo of the receipt is required.');
+      if (!form.receiptFile && !isEditing && !preGeneratedId) {
+        setError('Upload a receipt photo or request one via email.');
         return;
       }
       if (!form.zelleInfo.trim()) {
@@ -310,7 +339,10 @@ export const AddTransactionForm = ({
     if (direction === 'Outflow') {
       const lineSummary = budgetLineSummaries.find((s) => s.line === budgetLine);
       if (lineSummary && amount > lineSummary.balance) {
-        setPendingTransaction(newTransaction);
+        setPendingTransaction({
+          transaction: newTransaction,
+          id: preGeneratedId ?? undefined,
+        });
         setOverdraftWarning(
           `This outflow of $${amount.toFixed(2)} exceeds the current ${budgetLine} balance of $${lineSummary.balance.toFixed(2)}. The account will go negative. Do you want to proceed anyway?`,
         );
@@ -318,7 +350,7 @@ export const AddTransactionForm = ({
       }
     }
 
-    await submitTransaction(newTransaction);
+    await submitTransaction(newTransaction, preGeneratedId ?? undefined);
   };
 
   const showFunding =
@@ -436,14 +468,33 @@ export const AddTransactionForm = ({
               Receipt Photo {!isEditing && <span className="wl-form-required">*</span>}
               {scanning && <span className="wl-ocr-scanning"> Scanning…</span>}
             </label>
-            <input
-              id="receiptFile"
-              name="receiptFile"
-              type="file"
-              accept="image/*,application/pdf"
-              className="wl-form-file"
-              onChange={handleReceiptChange}
-            />
+            <div className="wl-receipt-options">
+              <input
+                id="receiptFile"
+                name="receiptFile"
+                type="file"
+                accept="image/*,application/pdf"
+                className="wl-form-file"
+                onChange={handleReceiptChange}
+              />
+              {!isEditing && (
+                <>
+                  <div className="wl-receipt-or">or</div>
+                  <button
+                    type="button"
+                    className="wl-btn-request-receipt"
+                    onClick={handleRequestReceipt}
+                  >
+                    Request Receipt via Email
+                  </button>
+                  {preGeneratedId && (
+                    <span className="wl-receipt-requested-note">
+                      Receipt requested — waiting for member to upload
+                    </span>
+                  )}
+                </>
+              )}
+            </div>
             {isEditing && existingTransaction?.receiptFileUrl && (
               <span className="wl-form-file-existing">
                 Current:{' '}
@@ -633,14 +684,33 @@ export const AddTransactionForm = ({
                 Receipt Photo {!isEditing && <span className="wl-form-required">*</span>}
                 {scanning && <span className="wl-ocr-scanning"> Scanning…</span>}
               </label>
-              <input
-                id="receiptFile"
-                name="receiptFile"
-                type="file"
-                accept="image/*,application/pdf"
-                className="wl-form-file"
-                onChange={handleReceiptChange}
-              />
+              <div className="wl-receipt-options">
+                <input
+                  id="receiptFile"
+                  name="receiptFile"
+                  type="file"
+                  accept="image/*,application/pdf"
+                  className="wl-form-file"
+                  onChange={handleReceiptChange}
+                />
+                {!isEditing && (
+                  <>
+                    <div className="wl-receipt-or">or</div>
+                    <button
+                      type="button"
+                      className="wl-btn-request-receipt"
+                      onClick={handleRequestReceipt}
+                    >
+                      Request Receipt via Email
+                    </button>
+                    {preGeneratedId && (
+                      <span className="wl-receipt-requested-note">
+                        Receipt requested — waiting for member to upload
+                      </span>
+                    )}
+                  </>
+                )}
+              </div>
               {isEditing && existingTransaction?.receiptFileUrl && (
                 <span className="wl-form-file-existing">
                   Current:{' '}
@@ -701,7 +771,9 @@ export const AddTransactionForm = ({
             <button
               type="button"
               className="wl-btn-warning"
-              onClick={() => submitTransaction(pendingTransaction)}
+              onClick={() =>
+                submitTransaction(pendingTransaction.transaction, pendingTransaction.id)
+              }
             >
               Proceed anyway
             </button>
