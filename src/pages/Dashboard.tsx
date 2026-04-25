@@ -139,7 +139,10 @@ export const Dashboard = () => {
       </div>
 
       <TransactionModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
-      <ReconciliationModal isOpen={reconcileOpen} onClose={() => setReconcileOpen(false)} />
+      <ReconciliationModal
+        isOpen={reconcileOpen}
+        onClose={() => setReconcileOpen(false)}
+      />
     </div>
   );
 };

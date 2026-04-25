@@ -22,6 +22,7 @@ import {
   LedgerContextValue,
   Organization,
   PendingChange,
+  ReloadRequest,
   Transaction,
   UserRole,
 } from '../types';
@@ -44,6 +45,7 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [auditLog, setAuditLog] = useState<AuditEntry[]>([]);
   const [pendingChanges, setPendingChanges] = useState<PendingChange[]>([]);
+  const [reloadRequests, setReloadRequests] = useState<ReloadRequest[]>([]);
   const [activeOrganizationId, setActiveOrganizationIdState] = useState<string | null>(
     () => localStorage.getItem('activeOrganizationId'),
   );
@@ -161,10 +163,19 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
       setPendingChanges(changes);
     });
 
+    const reloadRef = collection(db, 'clubs', activeOrganizationId, 'reloadRequests');
+    const unsubReload = onSnapshot(reloadRef, (snapshot) => {
+      const requests: ReloadRequest[] = snapshot.docs
+        .map((doc) => ({ id: doc.id, ...(doc.data() as Omit<ReloadRequest, 'id'>) }))
+        .sort((a, b) => b.requestedAt - a.requestedAt);
+      setReloadRequests(requests);
+    });
+
     return () => {
       unsubTxns();
       unsubAudit();
       unsubPending();
+      unsubReload();
     };
   }, [activeOrganizationId]);
 
@@ -444,6 +455,56 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     await updateDoc(doc(db, 'clubs', activeOrganizationId), {
       lastReconciliationDate: now,
     });
+    const txnsToReconcile = (activeOrganization?.transactions ?? []).filter((t) =>
+      transactionIds.includes(t.id),
+    );
+    const totalAmount = txnsToReconcile
+      .filter((t) => t.direction === 'Outflow')
+      .reduce((sum, t) => sum + t.amount, 0);
+    const exemptionCount = txnsToReconcile.filter((t) => t.exemptionFormUrl).length;
+    const userEmail = auth.currentUser?.email ?? 'unknown';
+    await addDoc(collection(db, 'clubs', activeOrganizationId, 'auditLog'), {
+      action: 'reconcile',
+      performedBy: userEmail,
+      timestamp: now,
+      transactionId: '',
+      transactionTitle: `${transactionIds.length} transaction${transactionIds.length !== 1 ? 's' : ''} reconciled`,
+      before: null,
+      after: null,
+      reconciliationSummary: {
+        transactionCount: transactionIds.length,
+        totalAmount,
+        exemptionCount,
+        transactionIds,
+      },
+    });
+  };
+
+  const requestReload = async (
+    amount: number,
+    reconciledTotal: number,
+    transactionCount: number,
+  ) => {
+    if (!activeOrganizationId) return;
+    const userEmail = auth.currentUser?.email ?? 'unknown';
+    const now = Date.now();
+    await addDoc(collection(db, 'clubs', activeOrganizationId, 'reloadRequests'), {
+      amount,
+      requestedBy: userEmail,
+      requestedAt: now,
+      reconciledTotal,
+      transactionCount,
+    });
+    await addDoc(collection(db, 'clubs', activeOrganizationId, 'auditLog'), {
+      action: 'reload_request',
+      performedBy: userEmail,
+      timestamp: now,
+      transactionId: '',
+      transactionTitle: `Reload request: $${amount.toFixed(2)}`,
+      before: null,
+      after: null,
+      reloadAmount: amount,
+    });
   };
 
   // Uploads an exemption form for a debit card transaction missing a receipt,
@@ -513,6 +574,8 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     initializeBudgetAllocations,
     reconcileTransactions,
     uploadExemptionForm,
+    reloadRequests,
+    requestReload,
     selectedBudgetLine,
     setSelectedBudgetLine,
     filteredTransactions,

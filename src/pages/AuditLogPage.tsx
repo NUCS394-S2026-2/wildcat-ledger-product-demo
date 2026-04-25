@@ -61,6 +61,20 @@ const actionLabel = (action: AuditEntry['action'], after: AuditEntry['after']) =
       className: 'wl-audit-badge--reject',
       entryClass: 'wl-audit-entry--reject',
     };
+  if (action === 'reconcile')
+    return {
+      label: 'Reconciled',
+      icon: '✓',
+      className: 'wl-audit-badge--approve',
+      entryClass: 'wl-audit-entry--approve',
+    };
+  if (action === 'reload_request')
+    return {
+      label: 'Reload Requested',
+      icon: '↻',
+      className: 'wl-audit-badge--create',
+      entryClass: 'wl-audit-entry--create',
+    };
   return {
     label: 'Cancelled',
     icon: '↩',
@@ -175,6 +189,31 @@ export const AuditLogPage = () => {
                       before={entry.before as Record<string, unknown>}
                       after={entry.after as Record<string, unknown>}
                     />
+                  )}
+                  {entry.action === 'reconcile' && entry.reconciliationSummary && (
+                    <div className="wl-audit-recon-summary">
+                      <span>
+                        {entry.reconciliationSummary.transactionCount} transactions
+                      </span>
+                      <span className="wl-audit-recon-sep">·</span>
+                      <span>
+                        ${entry.reconciliationSummary.totalAmount.toFixed(2)} total
+                      </span>
+                      {entry.reconciliationSummary.exemptionCount > 0 && (
+                        <>
+                          <span className="wl-audit-recon-sep">·</span>
+                          <span>
+                            {entry.reconciliationSummary.exemptionCount} exemption
+                            {entry.reconciliationSummary.exemptionCount !== 1 ? 's' : ''}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  )}
+                  {entry.action === 'reload_request' && entry.reloadAmount != null && (
+                    <div className="wl-audit-recon-summary">
+                      <span>Amount requested: ${entry.reloadAmount.toFixed(2)}</span>
+                    </div>
                   )}
                 </div>
               );

@@ -18,6 +18,10 @@ interface AddTransactionFormProps {
   existingTransaction?: Transaction;
 }
 
+// Northwestern Policy Exemption Request Form
+const PERF_URL =
+  'https://www.northwestern.edu/financial-operations/policies-procedures/forms/policy_exception.pdf';
+
 interface FormState {
   title: string;
   date: string;
@@ -26,6 +30,7 @@ interface FormState {
   funding: FundingOption;
   // Debit card purchase
   receiptFile: File | null;
+  noReceiptAcknowledged: boolean;
   // Direct payment
   contractFile: File | null;
   w9File: File | null;
@@ -46,6 +51,7 @@ const initialForm: FormState = {
   type: 'Debit card purchase',
   funding: 'ASG',
   receiptFile: null,
+  noReceiptAcknowledged: false,
   contractFile: null,
   w9File: null,
   isIndividualVendor: false,
@@ -94,6 +100,7 @@ export const AddTransactionForm = ({
         type: isSupportedType ? (t.type as SupportedType) : 'Debit card purchase',
         funding: (t.budgetLine === 'Debit Card' ? 'ASG' : t.budgetLine) as FundingOption,
         receiptFile: null,
+        noReceiptAcknowledged: t.noReceiptAcknowledged ?? false,
         contractFile: null,
         w9File: null,
         isIndividualVendor: t.isIndividualVendor ?? false,
@@ -176,6 +183,7 @@ export const AddTransactionForm = ({
         newType === 'Deposit' && prev.funding === 'ASG' ? 'Operating' : prev.funding,
       // Clear files when type changes
       receiptFile: null,
+      noReceiptAcknowledged: false,
       contractFile: null,
       w9File: null,
       isIndividualVendor: false,
@@ -263,8 +271,9 @@ export const AddTransactionForm = ({
 
     // Type-specific validation
     if (form.type === 'Debit card purchase') {
-      if (!form.receiptFile && !isEditing && !requestedDocTypes.has('receipt')) {
-        setError('Upload a receipt photo or request one via email.');
+      const hasExistingReceipt = isEditing && !!existingTransaction?.receiptFileUrl;
+      if (!form.receiptFile && !hasExistingReceipt && !form.noReceiptAcknowledged && !requestedDocTypes.has('receipt')) {
+        setError('Upload a receipt, request one via email, or check "I don\'t have a receipt".');
         return;
       }
     }
@@ -346,6 +355,8 @@ export const AddTransactionForm = ({
       zelleInfo: form.type === 'Reimbursement' ? form.zelleInfo.trim() : undefined,
       isIndividualVendor:
         form.type === 'Direct payment' ? form.isIndividualVendor : undefined,
+      noReceiptAcknowledged:
+        form.type === 'Debit card purchase' ? form.noReceiptAcknowledged : undefined,
       receiptFileUrl,
       contractFileUrl,
       w9FileUrl,
@@ -480,21 +491,26 @@ export const AddTransactionForm = ({
 
         {/* Debit card purchase: receipt photo */}
         {form.type === 'Debit card purchase' && (
-          <div className="wl-form-group">
-            <label className="wl-form-label" htmlFor="receiptFile">
-              Receipt Photo {!isEditing && <span className="wl-form-required">*</span>}
-              {scanning && <span className="wl-ocr-scanning"> Scanning…</span>}
-            </label>
-            <div className="wl-receipt-options">
+          <>
+            <div className="wl-form-group">
+              <label className="wl-form-label" htmlFor="receiptFile">
+                Receipt Photo{' '}
+                {!isEditing && !form.noReceiptAcknowledged && (
+                  <span className="wl-form-required">*</span>
+                )}
+                {scanning && <span className="wl-ocr-scanning"> Scanning…</span>}
+              </label>
+              <div className="wl-receipt-options">
               <input
                 id="receiptFile"
                 name="receiptFile"
                 type="file"
                 accept="image/*,application/pdf"
                 className="wl-form-file"
+                disabled={form.noReceiptAcknowledged}
                 onChange={handleReceiptChange}
               />
-              {!isEditing && (
+              {!isEditing && !form.noReceiptAcknowledged && (
                 <>
                   <div className="wl-receipt-or">or</div>
                   <button
@@ -511,20 +527,48 @@ export const AddTransactionForm = ({
                   )}
                 </>
               )}
+              {isEditing && existingTransaction?.receiptFileUrl && (
+                <span className="wl-form-file-existing">
+                  Current:{' '}
+                  <a
+                    href={existingTransaction.receiptFileUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    View file
+                  </a>
+                </span>
+              )}
+              </div>
             </div>
-            {isEditing && existingTransaction?.receiptFileUrl && (
-              <span className="wl-form-file-existing">
-                Current:{' '}
-                <a
-                  href={existingTransaction.receiptFileUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  View file
-                </a>
-              </span>
+
+            {/* Only show "no receipt" option when there's no receipt on file */}
+            {!form.receiptFile && !(isEditing && existingTransaction?.receiptFileUrl) && (
+              <div className="wl-form-no-receipt">
+                <label className="wl-form-checkbox">
+                  <input
+                    type="checkbox"
+                    name="noReceiptAcknowledged"
+                    checked={form.noReceiptAcknowledged}
+                    onChange={handleChange}
+                  />
+                  <span>I don&apos;t have a receipt</span>
+                </label>
+                {form.noReceiptAcknowledged && (
+                  <div className="wl-form-no-receipt-notice">
+                    <span>⚠ This transaction will be flagged as missing a receipt. </span>
+                    <span>
+                      You&apos;ll need to submit a{' '}
+                      <a href={PERF_URL} target="_blank" rel="noreferrer">
+                        Policy Exemption Request Form
+                      </a>{' '}
+                      and attach it before this transaction can be reconciled.
+                    </span>
+                  </div>
+                )}
+              </div>
             )}
-          </div>
+          </>
         )}
 
         {/* Direct payment fields */}

@@ -713,6 +713,32 @@
   margin-top: 2px;
 }
 
+/* ─── No-receipt acknowledgement ───────────────────────────────── */
+.wl-form-no-receipt {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 2px;
+}
+.wl-form-no-receipt-notice {
+  font-size: 0.82rem;
+  color: #92400e;
+  background: #fffbeb;
+  border: 1.5px solid #f59e0b;
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  line-height: 1.5;
+}
+.wl-form-no-receipt-notice a {
+  color: #7c3aed;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.wl-form-no-receipt-notice a:hover {
+  color: #5b21b6;
+}
+
 .wl-ocr-scanning {
   font-size: 0.78rem;
   color: var(--color-primary, #4f46e5);
@@ -831,8 +857,13 @@
   align-self: flex-start;
 }
 
-.wl-btn-primary:hover {
+.wl-btn-primary:hover:not(:disabled) {
   background: var(--color-primary-dark);
+}
+
+.wl-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* ─── Register / Set Budget Page ────────────────────────────────── */
@@ -2762,6 +2793,13 @@ tbody tr:last-child .wl-td {
 .wl-recon-item--warning .wl-recon-row:hover {
   background: #fef3c7;
 }
+.wl-recon-row--disabled {
+  cursor: default;
+  opacity: 0.75;
+}
+.wl-recon-row--disabled input[type='checkbox'] {
+  cursor: not-allowed;
+}
 
 /* ─── Status badges inside row ──────────────────────────────────── */
 .wl-recon-badge {
@@ -2856,4 +2894,98 @@ tbody tr:last-child .wl-td {
 .wl-btn-download-zip:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* ─── Reconciliation success (step 2) ──────────────────────────── */
+.wl-recon-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 0 20px;
+  text-align: center;
+}
+.wl-recon-success-icon {
+  font-size: 2.4rem;
+  color: var(--color-positive);
+  line-height: 1;
+}
+.wl-recon-success-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+.wl-recon-success-stats {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.wl-recon-success-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.wl-recon-success-stat-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+.wl-recon-success-stat-label {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ─── Reload request form ───────────────────────────────────────── */
+.wl-recon-reload {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 0 4px;
+  border-top: 1.5px solid var(--color-border);
+}
+.wl-recon-reload-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+.wl-recon-reload-subtitle {
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+.wl-recon-reload-input-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+.wl-recon-reload-dollar {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+.wl-recon-reload-input {
+  max-width: 160px;
+}
+
+/* ─── Audit log reconciliation summary ──────────────────────────── */
+.wl-audit-recon-summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  background: #f9f9fb;
+  border-top: 1px solid var(--color-border);
+}
+.wl-audit-recon-sep {
+  color: var(--color-border);
 }
