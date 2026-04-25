@@ -24,13 +24,7 @@ const formatDate = (ts: number) =>
 type Step = 'review' | 'reload';
 
 export const ReconciliationModal = ({ isOpen, onClose }: ReconciliationModalProps) => {
-  const {
-    activeOrganization,
-    reconcileTransactions,
-    uploadExemptionForm,
-    reloadRequests,
-    requestReload,
-  } = useLedger();
+  const { activeOrganization, reconcileTransactions, uploadExemptionForm } = useLedger();
 
   // Unreconciled debit card transactions
   const unreconciledTxns: Transaction[] = (activeOrganization?.transactions ?? []).filter(
@@ -51,21 +45,11 @@ export const ReconciliationModal = ({ isOpen, onClose }: ReconciliationModalProp
     totalAmount: number;
     exemptionCount: number;
   } | null>(null);
-  const [reloadAmountStr, setReloadAmountStr] = useState('');
-  const [reloadSubmitting, setReloadSubmitting] = useState(false);
-
+  const [snapshotTxnsWithReceipts, setSnapshotTxnsWithReceipts] = useState<Transaction[]>(
+    [],
+  );
   // A transaction is "covered" if it has a receipt or an attached exemption form
   const isCovered = (t: Transaction) => !!(t.receiptFileUrl || t.exemptionFormUrl);
-
-  // Compute suggested reload amount (average of last 3 reload requests)
-  const suggestedReloadAmount =
-    reloadRequests.length > 0
-      ? Math.round(
-          (reloadRequests.slice(0, 3).reduce((sum, r) => sum + r.amount, 0) /
-            Math.min(reloadRequests.length, 3)) *
-            100,
-        ) / 100
-      : null;
 
   // Reset selection whenever modal opens.
   // Only pre-select covered transactions when there are no uncovered ones;
@@ -85,7 +69,6 @@ export const ReconciliationModal = ({ isOpen, onClose }: ReconciliationModalProp
       setUploadError({});
       setStep('review');
       setReconSummary(null);
-      setReloadAmountStr('');
     }
   }, [isOpen, coveredIds, uncoveredCount]);
 
@@ -97,15 +80,6 @@ export const ReconciliationModal = ({ isOpen, onClose }: ReconciliationModalProp
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
   }, [isOpen, onClose]);
-
-  const toggle = (id: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
 
   // All uncovered transactions in the list (blocks reconciliation entirely)
   const uncoveredAll = unreconciledTxns.filter((t) => !isCovered(t));
@@ -155,11 +129,13 @@ export const ReconciliationModal = ({ isOpen, onClose }: ReconciliationModalProp
         .reduce((sum, t) => sum + t.amount, 0);
       const exemptionCount = reconciledTxns.filter((t) => t.exemptionFormUrl).length;
 
+      setSnapshotTxnsWithReceipts(
+        reconciledTxns.filter((t) => t.receiptFileUrl || t.exemptionFormUrl),
+      );
       await reconcileTransactions([...selected]);
 
       const summary = { transactionCount: selected.size, totalAmount, exemptionCount };
       setReconSummary(summary);
-      setReloadAmountStr((suggestedReloadAmount ?? totalAmount).toFixed(2));
       setStep('reload');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Reconciliation failed.');
@@ -171,7 +147,7 @@ export const ReconciliationModal = ({ isOpen, onClose }: ReconciliationModalProp
   const handleDownloadZip = async () => {
     setZipping(true);
     try {
-      await downloadReceiptsZip(unreconciledTxns);
+      await downloadReceiptsZip(snapshotTxnsWithReceipts);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not generate ZIP.');
     } finally {
@@ -179,33 +155,9 @@ export const ReconciliationModal = ({ isOpen, onClose }: ReconciliationModalProp
     }
   };
 
-  const handleSubmitReload = async () => {
-    if (!reconSummary) return;
-    const amount = parseFloat(reloadAmountStr);
-    if (isNaN(amount) || amount <= 0) {
-      setError('Enter a valid reload amount.');
-      return;
-    }
-    setReloadSubmitting(true);
-    setError(null);
-    try {
-      await requestReload(
-        amount,
-        reconSummary.totalAmount,
-        reconSummary.transactionCount,
-      );
-      onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to submit reload request.');
-    } finally {
-      setReloadSubmitting(false);
-    }
-  };
-
   if (!isOpen) return null;
 
   const lastDate = activeOrganization?.lastReconciliationDate;
-  const txnsWithReceipts = unreconciledTxns.filter((t) => t.receiptFileUrl);
 
   return (
     <div className="wl-modal-root">
@@ -246,126 +198,52 @@ export const ReconciliationModal = ({ isOpen, onClose }: ReconciliationModalProp
                 </div>
               ) : (
                 <>
-                  {!hideCheckboxes && (
-                    <div className="wl-recon-select-all">
-                      <label className="wl-recon-check-label">
-                        <input
-                          type="checkbox"
-                          checked={
-                            unreconciledTxns.filter(isCovered).length > 0 &&
-                            selected.size === unreconciledTxns.filter(isCovered).length
-                          }
-                          disabled={unreconciledTxns.filter(isCovered).length === 0}
-                          onChange={(e) =>
-                            setSelected(
-                              e.target.checked
-                                ? new Set(
-                                    unreconciledTxns.filter(isCovered).map((t) => t.id),
-                                  )
-                                : new Set(),
-                            )
-                          }
-                        />
-                        Select all ({unreconciledTxns.length})
-                      </label>
-                    </div>
-                  )}
-
                   <div className="wl-recon-list">
                     {unreconciledTxns.map((t) => {
-                      const txnCovered = isCovered(t);
-                      const isSelected = selected.has(t.id);
-                      const isMissing = !txnCovered;
+                      const isMissing = !isCovered(t);
 
                       return (
                         <div
                           key={t.id}
                           className={`wl-recon-item${isMissing ? ' wl-recon-item--warning' : ''}`}
                         >
-                          {/* Main row — no checkbox when any transaction is uncovered */}
-                          {hideCheckboxes ? (
-                            <div
-                              className={`wl-recon-row${isMissing ? ' wl-recon-row--disabled' : ''}`}
-                            >
-                              <span className="wl-recon-row-title">{t.title}</span>
-                              {t.receiptFileUrl && (
-                                <span
-                                  className="wl-recon-badge wl-recon-badge--ok"
-                                  title="Receipt uploaded"
-                                >
-                                  🧾
-                                </span>
-                              )}
-                              {t.exemptionFormUrl && (
-                                <span
-                                  className="wl-recon-badge wl-recon-badge--ok"
-                                  title="Exemption form attached"
-                                >
-                                  📋
-                                </span>
-                              )}
-                              {isMissing && (
-                                <span
-                                  className="wl-recon-badge wl-recon-badge--warn"
-                                  title={
-                                    t.noReceiptAcknowledged
-                                      ? 'Submitted without receipt — attach completed PERF to reconcile'
-                                      : 'Missing receipt — attach receipt or completed PERF to reconcile'
-                                  }
-                                >
-                                  ⚠
-                                </span>
-                              )}
-                              <span className="wl-recon-row-amount">
-                                {t.direction === 'Outflow' ? '−' : '+'}
-                                {formatCurrency(t.amount)}
+                          <div
+                            className={`wl-recon-row${isMissing ? ' wl-recon-row--disabled' : ''}`}
+                          >
+                            <span className="wl-recon-row-title">{t.title}</span>
+                            {t.receiptFileUrl && (
+                              <span
+                                className="wl-recon-badge wl-recon-badge--ok"
+                                title="Receipt uploaded"
+                              >
+                                🧾
                               </span>
-                            </div>
-                          ) : (
-                            <label
-                              className={`wl-recon-row${isMissing ? ' wl-recon-row--disabled' : ''}`}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                disabled={isMissing}
-                                onChange={() => !isMissing && toggle(t.id)}
-                              />
-                              <span className="wl-recon-row-title">{t.title}</span>
-                              {t.receiptFileUrl && (
-                                <span
-                                  className="wl-recon-badge wl-recon-badge--ok"
-                                  title="Receipt uploaded"
-                                >
-                                  🧾
-                                </span>
-                              )}
-                              {t.exemptionFormUrl && (
-                                <span
-                                  className="wl-recon-badge wl-recon-badge--ok"
-                                  title="Exemption form attached"
-                                >
-                                  📋
-                                </span>
-                              )}
-                              {isMissing && (
-                                <span
-                                  className="wl-recon-badge wl-recon-badge--warn"
-                                  title={
-                                    t.noReceiptAcknowledged
-                                      ? 'Submitted without receipt — attach completed PERF to reconcile'
-                                      : 'Missing receipt — attach receipt or completed PERF to reconcile'
-                                  }
-                                >
-                                  ⚠
-                                </span>
-                              )}
-                              <span className="wl-recon-row-amount">
-                                {t.direction === 'Outflow' ? '−' : '+'}
-                                {formatCurrency(t.amount)}
+                            )}
+                            {t.exemptionFormUrl && (
+                              <span
+                                className="wl-recon-badge wl-recon-badge--ok"
+                                title="Exemption form attached"
+                              >
+                                📋
                               </span>
-                            </label>
-                          )}
+                            )}
+                            {isMissing && (
+                              <span
+                                className="wl-recon-badge wl-recon-badge--warn"
+                                title={
+                                  t.noReceiptAcknowledged
+                                    ? 'Submitted without receipt — attach completed PERF to reconcile'
+                                    : 'Missing receipt — attach receipt or completed PERF to reconcile'
+                                }
+                              >
+                                ⚠
+                              </span>
+                            )}
+                            <span className="wl-recon-row-amount">
+                              {t.direction === 'Outflow' ? '−' : '+'}
+                              {formatCurrency(t.amount)}
+                            </span>
+                          </div>
 
                           {/* Missing receipt sub-panel */}
                           {isMissing && (
@@ -451,18 +329,6 @@ export const ReconciliationModal = ({ isOpen, onClose }: ReconciliationModalProp
                         ? 'Reconciling…'
                         : `Confirm & Reconcile (${displayCount})`}
                     </button>
-                    {txnsWithReceipts.length > 0 && (
-                      <button
-                        type="button"
-                        className="wl-btn-download-zip"
-                        onClick={handleDownloadZip}
-                        disabled={zipping || hideCheckboxes}
-                      >
-                        {zipping
-                          ? 'Bundling…'
-                          : `⬇ Receipts ZIP (${txnsWithReceipts.length})`}
-                      </button>
-                    )}
                     <button
                       type="button"
                       className="wl-btn-cancel"
@@ -495,7 +361,7 @@ export const ReconciliationModal = ({ isOpen, onClose }: ReconciliationModalProp
                     <span className="wl-recon-success-stat-value">
                       {formatCurrency(reconSummary.totalAmount)}
                     </span>
-                    <span className="wl-recon-success-stat-label">total spend</span>
+                    <span className="wl-recon-success-stat-label">total</span>
                   </div>
                   {reconSummary.exemptionCount > 0 && (
                     <div className="wl-recon-success-stat">
@@ -510,52 +376,21 @@ export const ReconciliationModal = ({ isOpen, onClose }: ReconciliationModalProp
                 </div>
               </div>
 
-              <div className="wl-recon-reload">
-                <h3 className="wl-recon-reload-title">Request a Reload</h3>
-                <p className="wl-recon-reload-subtitle">
-                  Request funds to replenish the debit card.
-                  {suggestedReloadAmount !== null &&
-                    ` Amount is suggested based on the average of the last ${Math.min(reloadRequests.length, 3)} reload request${Math.min(reloadRequests.length, 3) !== 1 ? 's' : ''}.`}
-                </p>
-                <div className="wl-recon-reload-input-row">
-                  <span className="wl-recon-reload-dollar">$</span>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    className="wl-form-input wl-recon-reload-input"
-                    value={reloadAmountStr}
-                    onChange={(e) => {
-                      const raw = e.target.value.replace(/[^\d.]/g, '');
-                      setReloadAmountStr(raw);
-                      setError(null);
-                    }}
-                    placeholder="0.00"
-                  />
-                </div>
-              </div>
-
-              {error && (
-                <div className="wl-form-error" style={{ marginTop: 12 }}>
-                  {error}
-                </div>
-              )}
-
               <div className="wl-recon-actions">
-                <button
-                  type="button"
-                  className="wl-btn-primary"
-                  onClick={handleSubmitReload}
-                  disabled={reloadSubmitting}
-                >
-                  {reloadSubmitting ? 'Submitting…' : 'Submit Reload Request'}
-                </button>
-                <button
-                  type="button"
-                  className="wl-btn-cancel"
-                  onClick={onClose}
-                  disabled={reloadSubmitting}
-                >
-                  Skip
+                {snapshotTxnsWithReceipts.length > 0 && (
+                  <button
+                    type="button"
+                    className="wl-btn-download-zip"
+                    onClick={handleDownloadZip}
+                    disabled={zipping}
+                  >
+                    {zipping
+                      ? 'Bundling…'
+                      : `⬇ Receipts ZIP (${snapshotTxnsWithReceipts.length})`}
+                  </button>
+                )}
+                <button type="button" className="wl-btn-primary" onClick={onClose}>
+                  Done
                 </button>
               </div>
             </>
