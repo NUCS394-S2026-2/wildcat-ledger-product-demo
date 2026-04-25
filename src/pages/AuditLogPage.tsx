@@ -1,3 +1,5 @@
+import { useNavigate } from 'react-router-dom';
+
 import { TopNav } from '../components/TopNav';
 import { useLedger } from '../hooks/useLedger';
 import { AuditEntry } from '../types';
@@ -124,11 +126,19 @@ const EditDiff = ({
 
 export const AuditLogPage = () => {
   const { auditLog, activeOrganization } = useLedger();
+  const navigate = useNavigate();
 
   return (
     <div className="wl-app">
       <TopNav />
       <div className="wl-main" style={{ marginTop: 64, paddingTop: 24 }}>
+        <button
+          type="button"
+          className="wl-btn-back"
+          onClick={() => navigate('/dashboard')}
+        >
+          ← Back to Dashboard
+        </button>
         <div className="wl-audit-heading-row">
           <h2 className="wl-audit-heading">Audit Log</h2>
           {activeOrganization && (
