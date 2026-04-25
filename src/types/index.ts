@@ -30,6 +30,9 @@ export interface Transaction {
   w9FileUrl?: string;
   contractedServicesFileUrl?: string;
   conflictOfInterestFileUrl?: string;
+  // Reconciliation — Debit Card transactions only
+  // null = not yet reconciled; number = epoch ms when reconciled
+  reconciledAt?: number | null;
 }
 
 export type AuditAction =
@@ -92,6 +95,9 @@ export interface Organization {
   budgetAllocations: BudgetAllocations;
   isBudgetLinesSet: boolean;
   transactions: Transaction[];
+  // Reconciliation — epoch ms of the last completed reconciliation,
+  // or the first transaction timestamp if never reconciled
+  lastReconciliationDate?: number | null;
 }
 
 export interface LedgerContextValue {
@@ -112,6 +118,7 @@ export interface LedgerContextValue {
   cancelPendingChange: (pendingId: string) => Promise<void>;
   updateBudgetAllocations: (allocations: BudgetAllocations) => Promise<void>;
   initializeBudgetAllocations: (allocations: BudgetAllocations) => Promise<void>;
+  reconcileTransactions: (transactionIds: string[]) => Promise<void>;
   selectedBudgetLine: BudgetLine | null;
   setSelectedBudgetLine: (line: BudgetLine | null) => void;
   filteredTransactions: Transaction[];

@@ -2298,6 +2298,25 @@ tbody tr:last-child .wl-td {
   color: #fff;
 }
 
+.wl-sidebar-reconcile-btn {
+  width: 100%;
+  background: none;
+  color: #4e2a84;
+  border: 2px solid #4e2a84;
+  border-radius: 8px;
+  padding: 11px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+.wl-sidebar-reconcile-btn:hover {
+  background: #4e2a84;
+  color: #fff;
+}
+
 .wl-sidebar-add-btn {
   width: 100%;
   background: #4e2a84;
@@ -2645,4 +2664,87 @@ tbody tr:last-child .wl-td {
   font-weight: 700;
   color: var(--color-positive);
   margin: 0;
+}
+
+/* ─── Reconciliation Modal ──────────────────────────────────────── */
+.wl-recon-subtitle {
+  font-size: 0.88rem;
+  color: var(--color-text-muted);
+  margin: 0 0 16px;
+}
+.wl-recon-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 0;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+.wl-recon-empty-icon {
+  font-size: 2rem;
+  color: var(--color-positive);
+}
+.wl-recon-select-all {
+  padding-bottom: 10px;
+  border-bottom: 1.5px solid var(--color-border);
+  margin-bottom: 8px;
+}
+.wl-recon-check-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  user-select: none;
+}
+.wl-recon-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 320px;
+  overflow-y: auto;
+  margin-bottom: 16px;
+}
+.wl-recon-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.12s;
+  user-select: none;
+}
+.wl-recon-row:hover {
+  background: #f5f3ff;
+}
+.wl-recon-row input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-primary);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.wl-recon-row-title {
+  flex: 1;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wl-recon-row-amount {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+.wl-recon-actions {
+  display: flex;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1.5px solid var(--color-border);
 }

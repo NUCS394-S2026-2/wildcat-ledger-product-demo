@@ -114,6 +114,7 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
                 officers: (data.officers ?? []) as string[],
                 budgetAllocations: data.budgetAllocations as BudgetAllocations,
                 isBudgetLinesSet: (data.isBudgetLinesSet as boolean) ?? false,
+                lastReconciliationDate: (data.lastReconciliationDate as number) ?? null,
                 transactions,
               };
             }),
@@ -265,6 +266,10 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     if (role !== 'treasurer' && role !== 'president') return;
     const old = activeOrganization?.transactions.find((t) => t.id === id);
     if (!old) return;
+    // Block editing reconciled Debit Card transactions
+    if (old.budgetLine === 'Debit Card' && old.reconciledAt != null) {
+      throw new Error('This transaction has been reconciled and cannot be edited.');
+    }
     await addDoc(collection(db, 'clubs', activeOrganizationId, 'pendingChanges'), {
       type: 'edit',
       transactionId: id,
@@ -290,6 +295,10 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     if (role !== 'treasurer' && role !== 'president') return;
     const old = activeOrganization?.transactions.find((t) => t.id === id);
     if (!old) return;
+    // Block deleting reconciled Debit Card transactions
+    if (old.budgetLine === 'Debit Card' && old.reconciledAt != null) {
+      throw new Error('This transaction has been reconciled and cannot be deleted.');
+    }
     await addDoc(collection(db, 'clubs', activeOrganizationId, 'pendingChanges'), {
       type: 'delete',
       transactionId: id,
@@ -419,6 +428,23 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     await updateDoc(orgRef, { budgetAllocations: allocations, isBudgetLinesSet: true });
   };
 
+  // Marks the selected Debit Card transactions as reconciled and updates
+  // lastReconciliationDate on the club to now.
+  const reconcileTransactions = async (transactionIds: string[]) => {
+    if (!activeOrganizationId) return;
+    const now = Date.now();
+    await Promise.all(
+      transactionIds.map((id) =>
+        updateDoc(doc(db, 'clubs', activeOrganizationId, 'transactions', id), {
+          reconciledAt: now,
+        }),
+      ),
+    );
+    await updateDoc(doc(db, 'clubs', activeOrganizationId), {
+      lastReconciliationDate: now,
+    });
+  };
+
   const activeOrganization =
     organizations.find((o: Organization) => o.id === activeOrganizationId) ?? null;
 
@@ -468,6 +494,7 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     cancelPendingChange,
     updateBudgetAllocations,
     initializeBudgetAllocations,
+    reconcileTransactions,
     selectedBudgetLine,
     setSelectedBudgetLine,
     filteredTransactions,
