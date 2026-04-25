@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { ReconciliationModal } from '../components/ReconciliationModal';
 import { TransactionList } from '../components/TransactionList';
 import { TransactionModal } from '../components/TransactionModal';
 import { useLedger } from '../hooks/useLedger';
@@ -9,6 +10,7 @@ import { formatCurrency } from '../utilities/calculations';
 
 export const Dashboard = () => {
   const [modalOpen, setModalOpen] = useState(false);
+  const [reconcileOpen, setReconcileOpen] = useState(false);
   const navigate = useNavigate();
   const {
     budgetLineSummaries,
@@ -86,6 +88,15 @@ export const Dashboard = () => {
             {canEdit && (
               <button
                 type="button"
+                className="wl-sidebar-reconcile-btn"
+                onClick={() => setReconcileOpen(true)}
+              >
+                Reconcile Debit Card
+              </button>
+            )}
+            {canEdit && (
+              <button
+                type="button"
                 className="wl-sidebar-add-btn"
                 onClick={() => setModalOpen(true)}
               >
@@ -128,6 +139,10 @@ export const Dashboard = () => {
       </div>
 
       <TransactionModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
+      <ReconciliationModal
+        isOpen={reconcileOpen}
+        onClose={() => setReconcileOpen(false)}
+      />
     </div>
   );
 };

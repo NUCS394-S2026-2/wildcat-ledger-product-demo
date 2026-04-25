@@ -10,9 +10,10 @@ import {
   setDoc,
   updateDoc,
 } from 'firebase/firestore';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import React, { createContext, useEffect, useMemo, useState } from 'react';
 
-import { auth, db } from '../config/firebase';
+import { auth, db, storage } from '../config/firebase';
 import {
   AuditAction,
   AuditEntry,
@@ -21,6 +22,7 @@ import {
   LedgerContextValue,
   Organization,
   PendingChange,
+  ReloadRequest,
   Transaction,
   UserRole,
 } from '../types';
@@ -43,6 +45,7 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [auditLog, setAuditLog] = useState<AuditEntry[]>([]);
   const [pendingChanges, setPendingChanges] = useState<PendingChange[]>([]);
+  const [reloadRequests, setReloadRequests] = useState<ReloadRequest[]>([]);
   const [activeOrganizationId, setActiveOrganizationIdState] = useState<string | null>(
     () => localStorage.getItem('activeOrganizationId'),
   );
@@ -114,6 +117,7 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
                 officers: (data.officers ?? []) as string[],
                 budgetAllocations: data.budgetAllocations as BudgetAllocations,
                 isBudgetLinesSet: (data.isBudgetLinesSet as boolean) ?? false,
+                lastReconciliationDate: (data.lastReconciliationDate as number) ?? null,
                 transactions,
               };
             }),
@@ -159,10 +163,19 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
       setPendingChanges(changes);
     });
 
+    const reloadRef = collection(db, 'clubs', activeOrganizationId, 'reloadRequests');
+    const unsubReload = onSnapshot(reloadRef, (snapshot) => {
+      const requests: ReloadRequest[] = snapshot.docs
+        .map((doc) => ({ id: doc.id, ...(doc.data() as Omit<ReloadRequest, 'id'>) }))
+        .sort((a, b) => b.requestedAt - a.requestedAt);
+      setReloadRequests(requests);
+    });
+
     return () => {
       unsubTxns();
       unsubAudit();
       unsubPending();
+      unsubReload();
     };
   }, [activeOrganizationId]);
 
@@ -265,6 +278,10 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     if (role !== 'treasurer' && role !== 'president') return;
     const old = activeOrganization?.transactions.find((t) => t.id === id);
     if (!old) return;
+    // Block editing reconciled Debit Card transactions
+    if (old.budgetLine === 'Debit Card' && old.reconciledAt != null) {
+      throw new Error('This transaction has been reconciled and cannot be edited.');
+    }
     await addDoc(collection(db, 'clubs', activeOrganizationId, 'pendingChanges'), {
       type: 'edit',
       transactionId: id,
@@ -290,6 +307,10 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     if (role !== 'treasurer' && role !== 'president') return;
     const old = activeOrganization?.transactions.find((t) => t.id === id);
     if (!old) return;
+    // Block deleting reconciled Debit Card transactions
+    if (old.budgetLine === 'Debit Card' && old.reconciledAt != null) {
+      throw new Error('This transaction has been reconciled and cannot be deleted.');
+    }
     await addDoc(collection(db, 'clubs', activeOrganizationId, 'pendingChanges'), {
       type: 'delete',
       transactionId: id,
@@ -419,6 +440,89 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     await updateDoc(orgRef, { budgetAllocations: allocations, isBudgetLinesSet: true });
   };
 
+  // Marks the selected Debit Card transactions as reconciled and updates
+  // lastReconciliationDate on the club to now.
+  const reconcileTransactions = async (transactionIds: string[]) => {
+    if (!activeOrganizationId) return;
+    const now = Date.now();
+    await Promise.all(
+      transactionIds.map((id) =>
+        updateDoc(doc(db, 'clubs', activeOrganizationId, 'transactions', id), {
+          reconciledAt: now,
+        }),
+      ),
+    );
+    await updateDoc(doc(db, 'clubs', activeOrganizationId), {
+      lastReconciliationDate: now,
+    });
+    const txnsToReconcile = (activeOrganization?.transactions ?? []).filter((t) =>
+      transactionIds.includes(t.id),
+    );
+    const totalAmount = txnsToReconcile
+      .filter((t) => t.direction === 'Outflow')
+      .reduce((sum, t) => sum + t.amount, 0);
+    const exemptionCount = txnsToReconcile.filter((t) => t.exemptionFormUrl).length;
+    const userEmail = auth.currentUser?.email ?? 'unknown';
+    await addDoc(collection(db, 'clubs', activeOrganizationId, 'auditLog'), {
+      action: 'reconcile',
+      performedBy: userEmail,
+      timestamp: now,
+      transactionId: '',
+      transactionTitle: `${transactionIds.length} transaction${transactionIds.length !== 1 ? 's' : ''} reconciled`,
+      before: null,
+      after: null,
+      reconciliationSummary: {
+        transactionCount: transactionIds.length,
+        totalAmount,
+        exemptionCount,
+        transactionIds,
+      },
+    });
+  };
+
+  const requestReload = async (
+    amount: number,
+    reconciledTotal: number,
+    transactionCount: number,
+  ) => {
+    if (!activeOrganizationId) return;
+    const userEmail = auth.currentUser?.email ?? 'unknown';
+    const now = Date.now();
+    await addDoc(collection(db, 'clubs', activeOrganizationId, 'reloadRequests'), {
+      amount,
+      requestedBy: userEmail,
+      requestedAt: now,
+      reconciledTotal,
+      transactionCount,
+    });
+    await addDoc(collection(db, 'clubs', activeOrganizationId, 'auditLog'), {
+      action: 'reload_request',
+      performedBy: userEmail,
+      timestamp: now,
+      transactionId: '',
+      transactionTitle: `Reload request: $${amount.toFixed(2)}`,
+      before: null,
+      after: null,
+      reloadAmount: amount,
+    });
+  };
+
+  // Uploads an exemption form for a debit card transaction missing a receipt,
+  // stores it in Firebase Storage, and saves the download URL on the transaction doc.
+  const uploadExemptionForm = async (transactionId: string, file: File) => {
+    if (!activeOrganizationId) return;
+    const path = `clubs/${activeOrganizationId}/transactions/${transactionId}/exemption-form_${Date.now()}_${file.name}`;
+    const storageRef = ref(storage, path);
+    await uploadBytes(storageRef, file);
+    const url = await getDownloadURL(storageRef);
+    await updateDoc(
+      doc(db, 'clubs', activeOrganizationId, 'transactions', transactionId),
+      {
+        exemptionFormUrl: url,
+      },
+    );
+  };
+
   const activeOrganization =
     organizations.find((o: Organization) => o.id === activeOrganizationId) ?? null;
 
@@ -468,6 +572,10 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
     cancelPendingChange,
     updateBudgetAllocations,
     initializeBudgetAllocations,
+    reconcileTransactions,
+    uploadExemptionForm,
+    reloadRequests,
+    requestReload,
     selectedBudgetLine,
     setSelectedBudgetLine,
     filteredTransactions,
