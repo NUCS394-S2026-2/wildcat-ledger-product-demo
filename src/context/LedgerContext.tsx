@@ -4,11 +4,15 @@ import {
   collection,
   deleteDoc,
   doc,
+  DocumentData,
   getDocs,
   increment,
   onSnapshot,
+  query,
+  QueryDocumentSnapshot,
   setDoc,
   updateDoc,
+  where,
 } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import React, { createContext, useEffect, useMemo, useState } from 'react';
@@ -82,48 +86,61 @@ export const LedgerProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (!userEmail) return;
 
-      const orgsRef = collection(db, 'clubs');
-      unsubSnapshot = onSnapshot(orgsRef, async (snapshot) => {
+      const clubsRef = collection(db, 'clubs');
+      const roleQueries = [
+        query(clubsRef, where('admins', 'array-contains', userEmail)),
+        query(clubsRef, where('treasurers', 'array-contains', userEmail)),
+        query(clubsRef, where('presidents', 'array-contains', userEmail)),
+        query(clubsRef, where('officers', 'array-contains', userEmail)),
+      ];
+
+      const latestDocs = new Map<number, QueryDocumentSnapshot<DocumentData>[]>();
+
+      const rebuildOrgs = async () => {
+        const seen = new Set<string>();
+        const merged: QueryDocumentSnapshot<DocumentData>[] = [];
+        for (const docs of latestDocs.values()) {
+          for (const d of docs) {
+            if (!seen.has(d.id)) {
+              seen.add(d.id);
+              merged.push(d);
+            }
+          }
+        }
         const orgs: Organization[] = await Promise.all(
-          snapshot.docs
-            .filter((doc) => {
-              const data = doc.data();
-              const admins: string[] = data.admins ?? [];
-              const officers: string[] = data.officers ?? [];
-              const treasurers: string[] = data.treasurers ?? [];
-              const presidents: string[] = data.presidents ?? [];
-              return (
-                admins.includes(userEmail) ||
-                treasurers.includes(userEmail) ||
-                presidents.includes(userEmail) ||
-                officers.includes(userEmail)
-              );
-            })
-            .map(async (doc) => {
-              const data = doc.data();
-              const txnsSnap = await getDocs(
-                collection(db, 'clubs', doc.id, 'transactions'),
-              );
-              const transactions: Transaction[] = txnsSnap.docs.map((t) => ({
-                id: t.id,
-                ...(t.data() as Omit<Transaction, 'id'>),
-              }));
-              return {
-                id: doc.id,
-                name: data.name as string,
-                admins: (data.admins ?? []) as string[],
-                treasurer: (data.treasurers ?? []) as string[],
-                president: (data.presidents ?? []) as string[],
-                officers: (data.officers ?? []) as string[],
-                budgetAllocations: data.budgetAllocations as BudgetAllocations,
-                isBudgetLinesSet: (data.isBudgetLinesSet as boolean) ?? false,
-                lastReconciliationDate: (data.lastReconciliationDate as number) ?? null,
-                transactions,
-              };
-            }),
+          merged.map(async (clubDoc) => {
+            const data = clubDoc.data();
+            const txnsSnap = await getDocs(
+              collection(db, 'clubs', clubDoc.id, 'transactions'),
+            );
+            const transactions: Transaction[] = txnsSnap.docs.map((t) => ({
+              id: t.id,
+              ...(t.data() as Omit<Transaction, 'id'>),
+            }));
+            return {
+              id: clubDoc.id,
+              name: data.name as string,
+              admins: (data.admins ?? []) as string[],
+              treasurer: (data.treasurers ?? []) as string[],
+              president: (data.presidents ?? []) as string[],
+              officers: (data.officers ?? []) as string[],
+              budgetAllocations: data.budgetAllocations as BudgetAllocations,
+              isBudgetLinesSet: (data.isBudgetLinesSet as boolean) ?? false,
+              lastReconciliationDate: (data.lastReconciliationDate as number) ?? null,
+              transactions,
+            };
+          }),
         );
         setOrganizations(orgs);
-      });
+      };
+
+      const roleUnsubs = roleQueries.map((q, i) =>
+        onSnapshot(q, (snapshot) => {
+          latestDocs.set(i, snapshot.docs);
+          rebuildOrgs();
+        }),
+      );
+      unsubSnapshot = () => roleUnsubs.forEach((u) => u());
     });
 
     return () => {
