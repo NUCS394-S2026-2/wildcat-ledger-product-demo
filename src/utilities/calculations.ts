@@ -37,12 +37,18 @@ export const calculateOverallSummary = (
   return { totalBalance, totalInflow, totalOutflow };
 };
 
+const byDateDescending = (a: Transaction, b: Transaction): number =>
+  (b.date ?? '').localeCompare(a.date ?? '');
+
 export const applyFilters = (
   transactions: Transaction[],
   selectedBudgetLine: BudgetLine | null,
 ): Transaction[] => {
-  if (selectedBudgetLine === null) return transactions;
-  return transactions.filter((t) => t.budgetLine === selectedBudgetLine);
+  const filtered =
+    selectedBudgetLine === null
+      ? transactions
+      : transactions.filter((t) => t.budgetLine === selectedBudgetLine);
+  return [...filtered].sort(byDateDescending);
 };
 
 export const formatCurrency = (amount: number): string =>
