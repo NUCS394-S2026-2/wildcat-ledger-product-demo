@@ -379,8 +379,8 @@ export const TransactionList = () => {
                       <td colSpan={canEdit ? 6 : 5} className="wl-delete-confirm-cell">
                         <div className="wl-inline-confirm wl-inline-confirm--inline">
                           <p>
-                            Submit a delete request for <strong>{t.title}</strong>? The
-                            other approver will need to confirm before it is removed.
+                            Submit a delete request for <strong>{t.title}</strong>?<br />
+                            The other approver will need to confirm before it is removed.
                           </p>
                           <div className="wl-overdraft-actions">
                             <button

@@ -1707,6 +1707,8 @@ tbody tr:last-child .wl-td {
 
 .wl-inline-confirm p {
   margin: 0 0 10px;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 @keyframes wl-slide-down {
